@@ -1,0 +1,17 @@
+.dub
+.vscode
+docs.json
+__dummy.html
+docs/
+/gd
+gd.so
+gd.dylib
+gd.dll
+gd.a
+libgd.a
+gd.lib
+gd-test-*
+*.exe
+*.o
+*.obj
+*.lst

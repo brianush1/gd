@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"Brian"
+	],
+	"copyright": "Copyright © 2022, Brian",
+	"description": "GUI for D",
+	"license": "BSL-1.0",
+	"name": "gd",
+	"versions": [
+		"gd_X11Impl",
+		"gd_Linux"
+	]
+}

@@ -1,0 +1,14 @@
+{
+	"authors": [
+		"Brian"
+	],
+	"copyright": "Copyright © 2022, Brian",
+	"dependencies": {
+		"gd": {
+			"path": "../.."
+		}
+	},
+	"description": "GD demo app",
+	"license": "BSL-1.0",
+	"name": "demo"
+}
