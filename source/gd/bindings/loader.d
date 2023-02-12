@@ -35,6 +35,15 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 
 				dls = null;
 			}
+			else version (Windows) {
+				import core.sys.windows.winbase : FreeLibrary;
+
+				foreach (dl; dls) {
+					FreeLibrary(dl);
+				}
+
+				dls = null;
+			}
 			else {
 				static assert(0);
 			}
@@ -44,7 +53,7 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 		private void*[] dls;
 
 		private enum code = {
-			char[] result = new char[(Members.length + 1) * 512];
+			char[] result = new char[(Members.length + 1) * 1024];
 
 			size_t index = 0;
 			void write(string str) {
@@ -53,7 +62,16 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 
 			write("extern (System) @nogc nothrow:
 
-			import core.sys.posix.dlfcn : dlerror, dlsym;
+			version (Posix) {
+				import core.sys.posix.dlfcn : dlerror, dlsym;
+			}
+			else version (Windows) {
+				import core.sys.windows.winbase : GetProcAddress;
+			}
+			else {
+				static assert(0, \"unsupported platform\");
+			}
+
 			import std.string : toStringz;
 
 			");
@@ -90,24 +108,34 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 					write(";
 						assert(dls, \"library closed\");
 						if (fun is null) {
-							version (Posix) {
-								alias bindingNameTuple = __traits(getAttributes, LibraryType.");
-					write(member);
-					write(");
-								static if (bindingNameTuple.length > 0) {
-									enum string libraryName = bindingNameTuple[0].name;
-								}
-								else {
-									enum string libraryName = toLibraryName(\"");
-					write(member);
-					write("\");
-								}
+							alias bindingNameTuple = __traits(getAttributes, LibraryType.");
+				write(member);
+				write(");
+							static if (bindingNameTuple.length > 0) {
+								enum string libraryName = bindingNameTuple[0].name;
+							}
+							else {
+								enum string libraryName = toLibraryName(\"");
+				write(member);
+				write("\");
+							}
 
+							version (Posix) {
 								foreach (dl; dls) {
 									dlerror();
 
 									void* sym = dlsym(dl, libraryName);
 									if (dlerror()) {
+										continue;
+									}
+
+									*cast(void**)&fun = sym;
+								}
+							}
+							else version (Windows) {
+								foreach (dl; dls) {
+									void* sym = GetProcAddress(dl, libraryName);
+									if (!sym) {
 										continue;
 									}
 
@@ -150,6 +178,17 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 
 		foreach (library; libraries) {
 			void* dl = dlopen(library.toStringz, RTLD_NOW);
+			if (dl) {
+				result.dls ~= dl;
+			}
+		}
+	}
+	else version (Windows) {
+		import core.sys.windows.winbase : LoadLibraryW;
+		import std.conv : to;
+
+		foreach (library; libraries) {
+			void* dl = LoadLibraryW((library.to!wstring ~ cast(wchar) 0).ptr);
 			if (dl) {
 				result.dls ~= dl;
 			}

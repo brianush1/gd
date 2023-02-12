@@ -3,6 +3,7 @@ import gd.resource;
 import gd.keycode;
 import gd.signal;
 import gd.graphics;
+import gd.cursor;
 import gd.math;
 
 struct GLOptions {
@@ -31,6 +32,9 @@ enum PointerFlags {
 	canSetPosition    = 0x0001,
 	hasPressure       = 0x0002,
 	hasScreenPosition = 0x0004,
+	relativeMotion    = 0x0008,
+	canConstrain      = 0x0010,
+	hasTilt           = 0x0020,
 }
 
 abstract class Pointer : Resource {
@@ -44,6 +48,11 @@ abstract class Pointer : Resource {
 
 	Signal!double onPressureChange;
 	abstract double pressure() const @property;
+
+	Signal!Vec2 onTiltChange;
+	abstract Vec2 tilt() const @property;
+
+	abstract void cursor(Cursors value) @property;
 
 	/++ relative motion event; see also onPositionChange +/
 	Signal!Vec2 onMovement;

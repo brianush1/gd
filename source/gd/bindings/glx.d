@@ -6,6 +6,8 @@ import gd.resource;
 import core.stdc.config;
 import core.stdc.stddef;
 
+version (gd_X11Impl):
+
 private static GLXLibrary m_GLX;
 GLXLibrary GLX() @property { // @suppress(dscanner.confusing.function_attributes)
 	if (m_GLX is null) {

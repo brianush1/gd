@@ -35,12 +35,6 @@ private:
 
 		addDependency(application);
 
-		// X11.setErrorHandler(cast(X11.XErrorHandler) function int(X11.Display* _disp, X11.XErrorEvent* errorEvent) {
-		// 	// throw new Exception("oops");
-
-		// 	return 0;
-		// });
-
 		m_native = X11.openDisplay(null);
 		enforce!X11Exception(m_native != null, "could not open X11 display");
 

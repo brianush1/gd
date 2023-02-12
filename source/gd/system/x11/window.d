@@ -6,6 +6,7 @@ import gd.system.window;
 import gd.resource;
 import gd.graphics;
 import gd.keycode;
+import gd.cursor;
 import gd.math;
 import std.typecons;
 import std.exception;
@@ -13,6 +14,7 @@ import std.exception;
 version (gd_X11Impl):
 
 import gd.bindings.x11;
+import gd.bindings.xcursor;
 import gd.bindings.xfixes;
 import gd.bindings.xi2;
 import gd.bindings.xsync;
@@ -37,6 +39,9 @@ class X11MousePointer : Pointer {
 
 		this.window = window;
 		addDependency(window);
+
+		updateFlags();
+		device.onValuatorsChange.connect({ updateFlags(); });
 	}
 
 	protected override void disposeImpl() {}
@@ -45,13 +50,32 @@ class X11MousePointer : Pointer {
 		return PointerType.mouse;
 	}
 
-	override PointerFlags flags() const @property {
+	private void updateFlags() {
 		PointerFlags flags = PointerFlags.canSetPosition
 			| PointerFlags.hasScreenPosition;
-		if (device.getValuatorByRole(ValuatorRole.pressure)) {
-			flags |= PointerFlags.hasPressure;
+
+		if (device.mode == DeviceMode.relative) {
+			flags |= PointerFlags.relativeMotion;
 		}
-		return flags;
+
+		if (Valuator pressureValuator = device.getValuatorByRole(ValuatorRole.pressure)) {
+			flags |= PointerFlags.hasPressure;
+
+			m_pressure = (pressureValuator.value - pressureValuator.min)
+				/ (pressureValuator.max - pressureValuator.min);
+			onPressureChange.emit(m_pressure);
+		}
+		else {
+			m_pressure = 1;
+			onPressureChange.emit(m_pressure);
+		}
+
+		m_flags = flags;
+	}
+
+	private PointerFlags m_flags;
+	override PointerFlags flags() const @property {
+		return m_flags;
 	}
 
 	override Vec2 position() const @property {
@@ -71,9 +95,80 @@ class X11MousePointer : Pointer {
 		warp(false, newPosition);
 	}
 
-	private double m_pressure = 0;
+	private double m_pressure = -1;
 	override double pressure() const @property {
 		return m_pressure;
+	}
+
+	override Vec2 tilt() const @property {
+		return Vec2(0, 0);
+	}
+
+	private static string[Cursors] cursorNameMap;
+	static this() {
+		cursorNameMap[Cursors.arrow] = "default";
+		cursorNameMap[Cursors.arrowLeft] = "left_ptr";
+		cursorNameMap[Cursors.arrowCenter] = "center_ptr";
+		cursorNameMap[Cursors.arrowRight] = "right_ptr";
+		cursorNameMap[Cursors.cell] = "cell";
+		cursorNameMap[Cursors.colorPicker] = "color-picker";
+		cursorNameMap[Cursors.pen] = "pencil"; // TODO: this
+		cursorNameMap[Cursors.pencil] = "pencil";
+		cursorNameMap[Cursors.contextMenu] = "context-menu";
+		cursorNameMap[Cursors.copy] = "copy";
+		cursorNameMap[Cursors.crosshair] = "crosshair";
+		cursorNameMap[Cursors.grab] = "grab";
+		cursorNameMap[Cursors.grabbing] = "grabbing";
+		cursorNameMap[Cursors.hand] = "pointer";
+		cursorNameMap[Cursors.help] = "help";
+		cursorNameMap[Cursors.link] = "alias";
+		cursorNameMap[Cursors.move] = "fleur";
+		cursorNameMap[Cursors.noDrop] = "no-drop";
+		cursorNameMap[Cursors.notAllowed] = "not-allowed";
+		cursorNameMap[Cursors.pan] = "all-scroll";
+		cursorNameMap[Cursors.progress] = "progress";
+		cursorNameMap[Cursors.splitVertical] = "split_v";
+		cursorNameMap[Cursors.splitHorizontal] = "split_h";
+		cursorNameMap[Cursors.resizeRow] = "row-resize";
+		cursorNameMap[Cursors.resizeColumn] = "col-resize";
+		cursorNameMap[Cursors.resizeN] = "top_side";
+		cursorNameMap[Cursors.resizeW] = "left_side";
+		cursorNameMap[Cursors.resizeS] = "bottom_side";
+		cursorNameMap[Cursors.resizeE] = "right_side";
+		cursorNameMap[Cursors.resizeNE] = "top_right_corner";
+		cursorNameMap[Cursors.resizeNW] = "top_left_corner";
+		cursorNameMap[Cursors.resizeSW] = "bottom_left_corner";
+		cursorNameMap[Cursors.resizeSE] = "bottom_right_corner";
+		cursorNameMap[Cursors.resizeNS] = "size_ver";
+		cursorNameMap[Cursors.resizeEW] = "size_hor";
+		cursorNameMap[Cursors.resizeNESW] = "size_bdiag";
+		cursorNameMap[Cursors.resizeNWSE] = "size_fdiag";
+		cursorNameMap[Cursors.text] = "text";
+		cursorNameMap[Cursors.verticalText] = "vertical-text";
+		cursorNameMap[Cursors.wait] = "wait";
+		cursorNameMap[Cursors.zoomIn] = "zoom-in";
+		cursorNameMap[Cursors.zoomOut] = "zoom-out";
+	}
+
+	override void cursor(Cursors value) @property {
+		import std.string : toStringz;
+
+		if (value == Cursors.none) {
+			XI2.defineCursor(window.display.native, deviceId, window.native, window.hiddenCursor);
+			return;
+		}
+
+		if (value !in cursorNameMap)
+			return;
+
+		X11.Cursor cursor = XCursor.libraryLoadCursor(window.display.native, cursorNameMap[value].toStringz);
+		if (cursor != X11.None) {
+			XI2.defineCursor(window.display.native, deviceId, window.native, cursor);
+
+			// TODO: keep the cursor around and free it at the end of the program
+			// just in case some window manager needs it to stay alive
+			X11.freeCursor(window.display.native, cursor);
+		}
 	}
 
 	private {
@@ -206,6 +301,8 @@ private:
 	GLX.GLXPixmap glxBackBuffer;
 	bool oversizeBuffer;
 
+	X11.Cursor hiddenCursor;
+
 	immutable(XSync.XSyncCounter) xsyncCounter = X11.None;
 
 	X11MousePointer[] m_pointers;
@@ -277,8 +374,8 @@ private:
 
 		enforce!X11Exception(chosenSamples != -1, "could not get framebuffer configuration");
 
-		// X11.XVisualInfo* visualInfo = GLX.getVisualFromFBConfig(display.native, fbconfig);
-		// enforce!X11Exception(visualInfo != null, "could not get OpenGL visual");
+		X11.XVisualInfo* visualInfo = GLX.getVisualFromFBConfig(display.native, fbconfig);
+		enforce!X11Exception(visualInfo != null, "could not get OpenGL visual");
 		X11.Visual* visual = X11.defaultVisual(display.native, screen);
 
 		try {
@@ -300,20 +397,20 @@ private:
 				&winAttribs,
 			);
 
-			X11.freeColormap(display.native, winAttribs.colormap);
+			// TODO: free colormap in correct place
+			// X11.freeColormap(display.native, winAttribs.colormap);
 		}
 		finally {
 			// X11.free(visualInfo);
 		}
 
-		// X11.XColor color;
-		// ubyte[1] data = [0];
+		X11.XColor color;
+		ubyte[1] data = [0];
 
-		// X11.Pixmap pixmap = X11.createBitmapFromData(display.native, native, cast(char*) data.ptr, 1, 1);
-		// X11.Cursor cursor = X11.createPixmapCursor(display.native, pixmap, pixmap, &color, &color, 0, 0);
-		// X11.freePixmap(display.native, pixmap);
-
-		// XI2.defineCursor(display.native, m_pointer.m_deviceId, native, cursor);
+		X11.Pixmap pixmap = X11.createBitmapFromData(display.native, native, cast(char*) data.ptr, 1, 1);
+		hiddenCursor = X11.createPixmapCursor(display.native, pixmap, pixmap, &color, &color, 0, 0);
+		X11.freePixmap(display.native, pixmap);
+		// TODO: free hiddenCursor
 
 		int[9] contextAttribs = [
 			GLX.CONTEXT_MAJOR_VERSION_ARB, options.gl.versionMajor,
@@ -550,9 +647,9 @@ private:
 			import std.algorithm : min, max;
 			import std.datetime : Duration, msecs;
 
-			void resizeBackBuffer(IVec2 newSize) {
+			bool resizeBackBuffer(IVec2 newSize) {
 				if (bufferSize == newSize) {
-					return;
+					return false;
 				}
 
 				bufferSize = newSize;
@@ -561,7 +658,13 @@ private:
 				X11.freePixmap(display.native, backBuffer);
 
 				backBuffer = X11.createPixmap(display.native, native, bufferSize.x, bufferSize.y, 24);
+				// FIXME: VERY occasionally, the doPaint called after resizeBackBuffer won't actually
+				// fill the backBuffer with any data
+				// X11.setForeground(display.native, gcontext, 0xFF00FFFF);
+				// X11.fillRectangle(display.native, backBuffer, gcontext, 0, 0, bufferSize.x, bufferSize.y);
 				glxBackBuffer = GLX.createPixmap(display.native, fbconfig, backBuffer, null);
+
+				return true;
 			}
 
 			// query the current width/height, because xconfigure.width/height can be up to 1 frame behind
@@ -569,11 +672,13 @@ private:
 			X11.getWindowAttributes(display.native, native, &attrs);
 			m_size = IVec2(max(attrs.width, 1), max(attrs.height, 1));
 
+			bool bufferResized;
+
 			if (oversizeBuffer) {
 				application.timer.cancel(currentConfigureTimer);
 				currentConfigureTimer = application.timer.setTimer(500.msecs, {
-					resizeBackBuffer(size);
-					doPaint(IRect(IVec2(), size));
+					bool resized = resizeBackBuffer(size);
+					doPaint(IRect(IVec2(), size), resized);
 				});
 
 				IVec2 newSize = bufferSize;
@@ -584,13 +689,13 @@ private:
 				newSize.x = min(newSize.x, max(attrs.width, X11.widthOfScreen(attrs.screen)));
 				newSize.y = min(newSize.y, max(attrs.height, X11.heightOfScreen(attrs.screen)));
 
-				resizeBackBuffer(newSize);
+				bufferResized = resizeBackBuffer(newSize);
 			}
 			else {
-				resizeBackBuffer(size);
+				bufferResized = resizeBackBuffer(size);
 			}
 
-			doPaint(IRect(IVec2(), size));
+			doPaint(IRect(IVec2(), size), true);
 
 			if (syncRequest) {
 				syncRequest = false;
@@ -765,25 +870,6 @@ private:
 	package void processXI2Event(XI2.XIDeviceEvent* devev) {
 		import std.stdio : writefln;
 
-		double[int] valuators;
-
-		int valuatorIndex = 0;
-		foreach (i; 0 .. devev.valuators.mask_len) {
-			ubyte mask = devev.valuators.mask[i];
-			foreach (j; 0 .. 8) {
-				if ((mask & cast(ubyte)(1 << j)) != 0) {
-					valuators[8 * i + j] = devev.valuators.values[valuatorIndex];
-					valuatorIndex += 1;
-				}
-			}
-		}
-
-		// debug { import std.stdio : writeln; try { writeln(valuators); } catch (Exception) {} }
-
-		// if (devev.flags & XI2.XIPointerEmulated) {
-		// 	return;
-		// }
-
 		switch (devev.evtype) {
 		case XI2.XI_TouchBegin:
 			writefln!"Touch Begin   %08X %f %f"(devev.detail, devev.event_x, devev.event_y);
@@ -816,16 +902,6 @@ private:
 					pointer.onButtonRelease.emit(button);
 				}
 			}
-			// writefln!"Button Press  %d"(devev.detail);
-
-			// enum maskLen = typeof(XI2).maskLen(typeof(XI2).XI_LASTEVENT);
-			// XI2.XIEventMask mask = {
-			// 	deviceid: XI2.XIAllMasterDevices, // XIAllDevices
-			// 	mask_len: maskLen,
-			// 	mask: new ubyte[maskLen].ptr,
-			// };
-			// XI2.grabDevice(display.native, 2, native, X11.CurrentTime,
-			// 	X11.None, XI2.XIGrabModeAsync, XI2.XIGrabModeAsync, X11.False, &mask);
 
 			break;
 		case XI2.XI_Motion:
@@ -836,32 +912,27 @@ private:
 				pointer.onPositionChange.emit(pointer.position);
 
 				foreach (valuator; pointer.device.valuators) {
-					if (valuator.number in valuators) {
+					if (valuator.value != valuator.lastValue) {
 						if (valuator.role == ValuatorRole.scrollVertical) {
 							pointer.onScroll.emit(
-								Vec2(0, valuators[valuator.number] - valuator.value)
+								Vec2(0, valuator.value - valuator.lastValue)
 								/ valuator.increment
 							);
 						}
 						else if (valuator.role == ValuatorRole.scrollHorizontal) {
 							pointer.onScroll.emit(
-								Vec2(valuators[valuator.number] - valuator.value, 0)
+								Vec2(valuator.value - valuator.lastValue, 0)
 								/ valuator.increment
 							);
 						}
 						else if (valuator.role == ValuatorRole.pressure) {
-							pointer.m_pressure = (valuators[valuator.number] - valuator.min)
+							pointer.m_pressure = (valuator.value - valuator.min)
 								/ (valuator.max - valuator.min);
 							pointer.onPressureChange.emit(pointer.pressure);
 						}
 					}
 				}
 			}
-			// writefln!"Motion        %f %f | %f %f"(devev.event_x, devev.event_y,
-			// 	2 in valuators ? valuators[2] : 0.0/0,
-			// 	3 in valuators ? valuators[3] : 0.0/0,
-			// );
-			writefln!"Motion %s"(valuators);
 			break;
 		default:
 			break;
@@ -902,10 +973,10 @@ public:
 	package void updateRegion(IRect region) {
 		if (disposed) return;
 
-		doPaint(region);
+		doPaint(region, false);
 	}
 
-	void doPaint(IRect region) {
+	void doPaint(IRect region, bool flush) {
 		if (m_paintHandler is null) {
 			return;
 		}
@@ -917,7 +988,21 @@ public:
 		IRect updateRegion = paintedRegion.clipArea(IRect(IVec2(0, 0), size));
 
 		GL.Sync fence = GL.fenceSync(GL.SYNC_GPU_COMMANDS_COMPLETE, 0);
-		GL.clientWaitSync(fence, GL.SYNC_FLUSH_COMMANDS_BIT, 50_000_000); // 50 ms = 20 fps
+
+		if (flush) {
+			GL.Enum syncRes;
+
+			do {
+				syncRes = GL.clientWaitSync(fence, GL.SYNC_FLUSH_COMMANDS_BIT, 50_000_000);
+			}
+			while (syncRes == GL.TIMEOUT_EXPIRED);
+		}
+		else {
+			GL.clientWaitSync(fence, GL.SYNC_FLUSH_COMMANDS_BIT, 50_000_000); // 50 ms = 20 fps
+		}
+
+		import gd.system.application : application;
+		import std.datetime : Duration, msecs;
 
 		X11.copyArea(display.native,
 			backBuffer, // source

@@ -11,6 +11,8 @@ import gd.bindings.x11;
 import gd.bindings.xfixes;
 import gd.bindings.xi2;
 
+package:
+
 enum DeviceUse {
 	keyboard,
 	pointer,
@@ -146,9 +148,17 @@ private:
 			if (ev.deviceid in devices) {
 				int deviceCount;
 
-				XI2.XIDeviceInfo* deviceInfo = XI2.queryDevice(display.native, ev.deviceid, &deviceCount);
+				// between the time when we start querying the device and receive a response,
+				// the master device can switch to a different slave
 
-				devices[ev.deviceid].update(deviceInfo.classes[0 .. deviceInfo.num_classes]);
+				// so we query the slave directly and check if it's attached to the master,
+				// and if so we update the master
+
+				XI2.XIDeviceInfo* deviceInfo = XI2.queryDevice(display.native, ev.sourceid, &deviceCount);
+
+				if (deviceInfo.attachment == ev.deviceid) {
+					devices[ev.deviceid].update(deviceInfo.classes[0 .. deviceInfo.num_classes]);
+				}
 
 				XI2.freeDeviceInfo(deviceInfo);
 			}
@@ -165,7 +175,6 @@ private:
 		case XI2.XI_KeyRelease:
 		case XI2.XI_Motion:
 			XI2.XIDeviceEvent* ev = cast(XI2.XIDeviceEvent*) cookie.data;
-			if (X11Window* window = ev.event in display.windowMap) window.processXI2Event(ev);
 
 			if (cookie.evtype == XI2.XI_Motion && ev.deviceid in devices) {
 				double[int] valuators;
@@ -181,10 +190,17 @@ private:
 					}
 				}
 
-				foreach (number, value; valuators) {
-					devices[ev.deviceid].getValuatorByNumber(number).m_value = value;
+				X11Device master = devices[ev.deviceid];
+				foreach (valuator; master.valuators) {
+					valuator.m_lastValue = valuator.m_value;
+
+					if (valuator.number in valuators) {
+						valuator.m_value = valuators[valuator.number];
+					}
 				}
 			}
+
+			if (X11Window* window = ev.event in display.windowMap) window.processXI2Event(ev);
 
 			break;
 		default:
@@ -244,6 +260,7 @@ final class Valuator {
 	private {
 		string m_label;
 		int m_number;
+		double m_lastValue;
 		double m_value;
 		double m_min;
 		double m_max;
@@ -256,6 +273,10 @@ final class Valuator {
 
 	string label() const @property { return m_label; }
 	int number() const @property { return m_number; }
+
+	/++ Returns the previous value of the valuator. Only valid in XI_Motion events +/
+	double lastValue() const @property { return m_lastValue; }
+
 	double value() const @property { return m_value; }
 	double min() const @property { return m_min; }
 	double max() const @property { return m_max; }
@@ -270,6 +291,11 @@ enum DeviceRole {
 	keyboard,
 }
 
+enum DeviceMode {
+	relative,
+	absolute,
+}
+
 class X11Device : Resource {
 
 	private int m_id;
@@ -277,6 +303,9 @@ class X11Device : Resource {
 
 	private DeviceRole m_role;
 	DeviceRole role() const @property { return m_role; }
+
+	private DeviceMode m_mode;
+	DeviceMode mode() const @property { return m_mode; }
 
 	private string m_name;
 	string name() const @property { return m_name; }
@@ -294,6 +323,8 @@ class X11Device : Resource {
 	}
 
 	protected override void disposeImpl() {}
+
+	Signal!() onValuatorsChange;
 
 	private Valuator[] m_valuators;
 	inout(Valuator)[] valuators() inout @property {
@@ -341,10 +372,17 @@ class X11Device : Resource {
 
 				XI2.XIValuatorClassInfo* valuatorInfo = cast(XI2.XIValuatorClassInfo*) classInfo;
 
+				if (valuatorInfo.mode == XI2.XIModeRelative) {
+					m_mode = DeviceMode.relative;
+				}
+				else if (valuatorInfo.mode == XI2.XIModeAbsolute) {
+					m_mode = DeviceMode.absolute;
+				}
+
 				Valuator valuator = new Valuator();
 				valuator.m_label = X11.getAtomName(display.native, valuatorInfo.label).fromStringz.idup;
 				valuator.m_number = valuatorInfo.number;
-				valuator.m_value = valuatorInfo.value;
+				valuator.m_lastValue = valuator.m_value = valuatorInfo.value;
 				valuator.m_min = valuatorInfo.min;
 				valuator.m_max = valuatorInfo.max;
 
@@ -372,6 +410,8 @@ class X11Device : Resource {
 				}
 			}
 		}
+
+		onValuatorsChange.emit();
 	}
 
 }

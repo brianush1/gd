@@ -358,6 +358,7 @@ void main(string[] args) {
 					~ readText("/usr/include/X11/extensions/XKBstr.h")),
 				DStep("/usr/include/X11/extensions/XKB.h"),
 				DStep("/usr/include/X11/XKBlib.h"),
+				DStep("/usr/include/X11/cursorfont.h"),
 				// DStep("/usr/include/X11/extensions/XInput2.h"),
 				// DStep("/usr/include/X11/extensions/Xfixes.h", [], "", null,
 				// 	"#include \"/usr/include/X11/Xlib.h\"\n"
@@ -415,6 +416,36 @@ void main(string[] args) {
 		};
 
 		write("../source/gd/bindings/xfixes.d", generate(xfixes));
+
+		writeln("done");
+	}
+
+	if (args.canFind("xcursor")) {
+		std.stdio.write("Generating XCursor bindings...    ");
+		stdout.flush();
+
+		Library xcursor = {
+			name: "xcursor",
+			className: "XCursor",
+			prefix: "Xcursor",
+			files: [
+				DStep("/usr/include/X11/Xcursor/Xcursor.h", [], "", null,
+					"#include \"/usr/include/X11/Xlib.h\"\n"
+					~ readText("/usr/include/X11/Xcursor/Xcursor.h")),
+			],
+
+			posix: ["libXcursor.so.1","libXcursor.so"],
+			dimports: ["x11"],
+			transform: (string src) {
+				foreach (symbol; ["Display", "Cursor", "Font", "XColor",
+						"Pixmap", "Drawable", "XImage"]) {
+					src = src.replaceAll(regex(r"\b" ~ symbol ~ r"\b"), "X11." ~ symbol);
+				}
+				return src;
+			},
+		};
+
+		write("../source/gd/bindings/xcursor.d", generate(xcursor));
 
 		writeln("done");
 	}

@@ -58,6 +58,11 @@ shared static this() {
 
 		m_application = new LinuxApplication();
 	}
+	else version (gd_Win32) {
+		import gd.system.win32.application : Win32Application;
+
+		m_application = new Win32Application();
+	}
 	else {
 		static assert(0, "unsupported platform");
 	}

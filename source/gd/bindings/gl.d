@@ -20,6 +20,9 @@ GLLibrary loadGL() {
 	version (Posix) {
 		libraries = ["libGL.so.1", "libGL.so"];
 	}
+	else version (Windows) {
+		libraries = ["OpenGL32.dll"];
+	}
 	else {
 		static assert(0, "unsupported platform");
 	}

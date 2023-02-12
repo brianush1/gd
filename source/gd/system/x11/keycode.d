@@ -1,4 +1,7 @@
 module gd.system.x11.keycode;
+
+version (gd_X11Impl):
+
 import gd.bindings.x11;
 import gd.keycode;
 

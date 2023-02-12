@@ -5,6 +5,8 @@ import gd.resource;
 import core.stdc.config;
 import core.stdc.stddef;
 
+version (gd_X11Impl):
+
 private static XFixesLibrary m_XFixes;
 XFixesLibrary XFixes() @property { // @suppress(dscanner.confusing.function_attributes)
 	if (m_XFixes is null) {

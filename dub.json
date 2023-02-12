@@ -6,8 +6,21 @@
 	"description": "GUI for D",
 	"license": "BSL-1.0",
 	"name": "gd",
-	"versions": [
-		"gd_X11Impl",
-		"gd_Linux"
+	"configurations": [
+		{
+			"name": "gd_Linux",
+			"platforms": ["linux"],
+			"versions": [
+				"gd_X11Impl",
+				"gd_Linux"
+			]
+		},
+		{
+			"name": "gd_Win32",
+			"platforms": ["windows"],
+			"versions": [
+				"gd_Win32"
+			]
+		}
 	]
 }

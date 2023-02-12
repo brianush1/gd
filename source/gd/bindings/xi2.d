@@ -6,6 +6,8 @@ import gd.resource;
 import core.stdc.config;
 import core.stdc.stddef;
 
+version (gd_X11Impl):
+
 private static XI2Library m_XI2;
 XI2Library XI2() @property { // @suppress(dscanner.confusing.function_attributes)
 	if (m_XI2 is null) {
