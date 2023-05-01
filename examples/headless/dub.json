@@ -2,14 +2,14 @@
 	"authors": [
 		"Brian"
 	],
-	"copyright": "Copyright © 2022, Brian",
+	"copyright": "Copyright © 2023, Brian",
 	"dependencies": {
 		"gd": {
 			"path": "../.."
 		},
 		"imageformats": "~>7.0.2"
 	},
-	"description": "GD demo app",
+	"description": "GD headless rendering example",
 	"license": "BSL-1.0",
-	"name": "demo"
+	"name": "headless"
 }

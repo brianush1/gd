@@ -1,5 +1,5 @@
 module gd.timer;
-import gd.system.application;
+import gd.internal.application;
 import std.datetime;
 
 class Timer {

@@ -1,4 +1,5 @@
 module gd.gui.element;
+import gd.gui.event;
 import gd.signal;
 import gd.graphics;
 import gd.math;
@@ -163,7 +164,6 @@ abstract class Element {
 
 	private Container[] containers;
 	inout(Container) container() inout @property { return containers[0]; }
-	alias container this;
 
 	this() {
 		bind(new Container, 1);
@@ -205,26 +205,6 @@ abstract class Element {
 
 	void paint() {
 
-	}
-
-}
-
-class Event {
-
-	private bool m_defaultPrevented = false;
-	bool defaultPrevented() const @property { return m_defaultPrevented; }
-
-	private bool m_propagationStopped = false;
-	bool propagationStopped() const @property { return m_propagationStopped; }
-
-	Element target;
-
-	void preventDefault() {
-		m_defaultPrevented = true;
-	}
-
-	void stopPropagation() {
-		m_propagationStopped = true;
 	}
 
 }

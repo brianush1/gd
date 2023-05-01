@@ -2,14 +2,13 @@
 	"authors": [
 		"Brian"
 	],
-	"copyright": "Copyright © 2022, Brian",
-	"description": "GUI for D",
-	"license": "BSL-1.0",
-	"name": "gd",
 	"configurations": [
 		{
 			"name": "gd_Linux",
-			"platforms": ["linux"],
+			"platforms": [
+				"linux"
+			],
+			"targetType": "library",
 			"versions": [
 				"gd_X11Impl",
 				"gd_Linux"
@@ -17,10 +16,20 @@
 		},
 		{
 			"name": "gd_Win32",
-			"platforms": ["windows"],
+			"platforms": [
+				"windows"
+			],
+			"targetType": "library",
 			"versions": [
 				"gd_Win32"
 			]
 		}
-	]
+	],
+	"copyright": "Copyright © 2022, Brian",
+	"dependencies": {
+		"weakset": "~>1.0.1"
+	},
+	"description": "GUI for D",
+	"license": "BSL-1.0",
+	"name": "gd"
 }

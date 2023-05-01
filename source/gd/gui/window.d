@@ -1,8 +1,9 @@
 module gd.gui.window;
 import gd.gui.element;
-import gd.system.window : SysWindow = Window, WindowInitOptions;
-public import gd.system.window : WindowState;
-import gd.system.application;
+import gd.gui.event;
+import gd.internal.window : SysWindow = Window, WindowInitOptions;
+public import gd.internal.window : WindowState;
+import gd.internal.application;
 import gd.signal;
 import gd.graphics;
 import gd.math;
@@ -12,23 +13,6 @@ import core.thread;
 
 private bool[Window] visibleWindows;
 private bool[Window] allWindows;
-
-double getTime() {
-	import core.time : MonoTimeImpl, ClockType;
-
-	auto time = MonoTimeImpl!(ClockType.normal).currTime();
-	return time.ticks / cast(double) time.ticksPerSecond;
-}
-
-double getUnixTime() {
-	import std.datetime.systime : SysTime, Clock;
-	import std.datetime.interval : Interval;
-	import std.datetime.date : DateTime;
-	import std.datetime.timezone : UTC;
-
-	return Interval!SysTime(SysTime(DateTime(1970, 1, 1), UTC()), Clock.currTime)
-		.length.total!"hnsecs" / 10_000_000.0;
-}
 
 class Window : Element {
 
@@ -60,13 +44,24 @@ class Window : Element {
 		WindowInitOptions options = {
 			title: title,
 			size: IVec2(absoluteSize),
-			initialState: WindowState.none,
+			initialState: WindowState.None,
 			backgroundColor: background,
 		};
 		impl = application.display.createWindow(options);
 		impl.onCloseRequest.connect(&closeRequestHandler);
 		impl.onSizeChange.connect(&resizeHandler);
 		allWindows[this] = true;
+
+		onVisibleChange.connect((value) {
+			if (impl !is null) {
+				if (value) {
+					impl.state = impl.state | WindowState.Visible;
+				}
+				else {
+					impl.state = impl.state & ~WindowState.Visible;
+				}
+			}
+		});
 
 		onTitleChange.connect((value) {
 			if (impl !is null) {
@@ -83,7 +78,7 @@ class Window : Element {
 		impl.onStateChange.connect((value) {
 			onStateChange.emit(new Event);
 
-			if (value & WindowState.visible) {
+			if (value & WindowState.Visible) {
 				visibleWindows[this] = true;
 			}
 			else {
@@ -91,18 +86,17 @@ class Window : Element {
 			}
 		});
 
-		impl.setPaintHandler((IRect region, IVec2 bufferSize) {
+		impl.setPaintHandler((IRect region, IVec2 bufferSize, GraphicsContext context) {
 			import gd.bindings.gl : GL;
 			import std.algorithm : max;
 
-			GL.clearColor(Color.fromHex("#ff7f00").tupleof);
-			GL.clear(GL.COLOR_BUFFER_BIT);
+			context.clearColor(Color.fromHex("#ff7f00"));
 
-			GL.enable(GL.SCISSOR_TEST);
-			GL.scissor(20, bufferSize.y - 20 - (impl.size.y - 40), max(0, impl.size.x - 40), max(0, impl.size.y - 40));
-			GL.clearColor(Color.fromHex("#00c000").tupleof);
-			GL.clear(GL.COLOR_BUFFER_BIT);
-			GL.disable(GL.SCISSOR_TEST);
+			// GL.enable(GL.SCISSOR_TEST);
+			// GL.scissor(20, bufferSize.y - 20 - (impl.size.y - 40), max(0, impl.size.x - 40), max(0, impl.size.y - 40));
+			// GL.clearColor(Color.fromHex("#00c000").tupleof);
+			// GL.clear(GL.COLOR_BUFFER_BIT);
+			// GL.disable(GL.SCISSOR_TEST);
 
 			return IRect(IVec2(0, 0), bufferSize);
 		});
@@ -140,20 +134,4 @@ class Window : Element {
 		}
 	}
 
-}
-
-Window[] getVisibleWindows() {
-	import std.array : array;
-
-	return visibleWindows.byKey.array;
-}
-
-void hideAllWindows() {
-	foreach (win; getVisibleWindows) {
-		win.visible = false;
-	}
-}
-
-bool isGuiActive() {
-	return visibleWindows.length > 0;
 }

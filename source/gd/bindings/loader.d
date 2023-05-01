@@ -108,9 +108,9 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 					write(";
 						assert(dls, \"library closed\");
 						if (fun is null) {
-							alias bindingNameTuple = __traits(getAttributes, LibraryType.");
+							alias bindingNameTuple = __traits(getAttributes, __traits(getOverloads, LibraryType, \"");
 				write(member);
-				write(");
+				write("\")[0]);
 							static if (bindingNameTuple.length > 0) {
 								enum string libraryName = bindingNameTuple[0].name;
 							}
