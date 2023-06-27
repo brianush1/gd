@@ -6,8 +6,7 @@
 	"dependencies": {
 		"gd": {
 			"path": "../.."
-		},
-		"imageformats": "~>7.0.2"
+		}
 	},
 	"description": "GD headless rendering example",
 	"license": "BSL-1.0",

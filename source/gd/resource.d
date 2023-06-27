@@ -27,8 +27,43 @@ shared static ~this() {
 
 		stderr.writefln!"WARNING: %d resources leaked"(resourceCount);
 		debug (resourceLeaks) {
+			int[string] frequencyMap;
+
 			foreach (resource; resourceSet.byKey) {
-				stderr.writefln!"- %s"(resource);
+				import std.string : splitLines, join, format;
+				import std.algorithm : canFind;
+
+				string[] trace = resource.stackTrace.splitLines;
+
+				string[] cleanTrace;
+
+				int stage = 0;
+				foreach (line; trace) {
+					if (line.canFind("gd/resource.d:")) {
+						if (stage <= 1) {
+							stage = 1;
+							continue;
+						}
+					}
+
+					if (stage >= 1) {
+						stage = 2;
+						cleanTrace ~= line;
+					}
+				}
+
+				string res = format!"- %s$resourceUseCount\n%s\n"(resource, cleanTrace.join("\n"));
+				if (res !in frequencyMap)
+					frequencyMap[res] = 0;
+
+				frequencyMap[res] += 1;
+			}
+
+			foreach (displayString, frequency; frequencyMap) {
+				import std.string : replace;
+				import std.conv : text;
+
+				stderr.writeln(displayString.replace("$resourceUseCount", text(" (", frequency, ")")));
 			}
 		}
 	}
@@ -66,18 +101,46 @@ debug (resourceLeaks) {
 	}
 }
 
+debug (resourceLeaks) {
+	// source: http://arsdnet.net/dcode/stacktrace.d
+	private string getStackTrace() {
+		import core.runtime : defaultTraceHandler, defaultTraceDeallocator;
+
+		// on some systems, druntime cuts out the first few functions on the trace as
+		// they are internal so we'll make some dummy functions here so our actual
+		// info doesn't get cut
+		Throwable.TraceInfo f5() { return defaultTraceHandler(); }
+		Throwable.TraceInfo f4() { return f5(); }
+		Throwable.TraceInfo f3() { return f4(); }
+		Throwable.TraceInfo f2() { return f3(); }
+
+		Throwable.TraceInfo info = f2();
+		string res = info.toString();
+		defaultTraceDeallocator(info);
+		return res;
+	}
+}
+
 abstract class Resource {
 
 	private bool[Resource] m_children;
 	private bool[Resource] parents;
 	private size_t m_id;
 
+	debug (resourceLeaks) {
+		private string stackTrace;
+	}
+
 	this() {
 		resourceCount.atomicOp!"+="(1);
 		m_id = resourceIdCounter.atomicOp!"+="(1);
 
-		debug (resourceLeaks) synchronized (resourceSetMutex) {
-			resourceSet[this] = true;
+		debug (resourceLeaks) {
+			stackTrace = getStackTrace();
+
+			synchronized (resourceSetMutex) {
+				resourceSet[this] = true;
+			}
 		}
 	}
 

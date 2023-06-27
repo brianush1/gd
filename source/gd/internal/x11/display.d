@@ -2,10 +2,11 @@ module gd.internal.x11.display;
 import gd.internal.x11.device;
 import gd.internal.x11.window;
 import gd.internal.x11.exception;
+import gd.internal.gl.opengl;
 import gd.internal.window;
 import gd.internal.display;
 import gd.internal.application;
-import gd.graphics.gl.context;
+import gd.internal.gpu;
 import gd.graphics;
 import gd.math.rectangle;
 import gd.resource;
@@ -125,18 +126,19 @@ private:
 
 		headlessGlxWindow = GLX.createWindow(native, fbconfig, headlessWindow, null);
 
-		m_headlessGraphicsContext = new GLGraphicsContext();
-		m_headlessGraphicsContext.makeCurrent = {
+		m_gpuContext = new GLContext();
+		m_gpuContext.addDependency(this);
+		m_gpuContext.registerWindow(null, {
 			// TODO: don't call this if it's already the current context
 			GLX.makeCurrent(native, headlessGlxWindow, headlessGlxContext);
-		};
+		});
 	}
 
 public:
 
-	private GLGraphicsContext m_headlessGraphicsContext;
-	override inout(GraphicsContext) headlessGraphicsContext() inout @property {
-		return m_headlessGraphicsContext;
+	private GLContext m_gpuContext;
+	override inout(GPUContext) gpuContext() inout @property {
+		return m_gpuContext;
 	}
 
 	template atom(string name, Flag!"create" create = Yes.create) {

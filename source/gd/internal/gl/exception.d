@@ -1,5 +1,6 @@
-module gd.graphics.gl.exception;
+module gd.internal.gl.exception;
 import gd.bindings.gl;
+public import std.exception : enforce;
 
 class GLException : Exception {
 
@@ -9,7 +10,7 @@ class GLException : Exception {
 
 }
 
-void checkGLError() {
+package void checkGLError() {
 	final switch (GL.getError()) {
 	case GL.NO_ERROR:
 		return;

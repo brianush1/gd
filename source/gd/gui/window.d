@@ -1,6 +1,7 @@
 module gd.gui.window;
 import gd.gui.element;
 import gd.gui.event;
+import gd.internal.gpu;
 import gd.internal.window : SysWindow = Window, WindowInitOptions;
 public import gd.internal.window : WindowState;
 import gd.internal.application;
@@ -86,11 +87,11 @@ class Window : Element {
 			}
 		});
 
-		impl.setPaintHandler((IRect region, IVec2 bufferSize, GraphicsContext context) {
+		impl.setPaintHandler((IRect region, IVec2 bufferSize, GPUSurface surface) {
 			import gd.bindings.gl : GL;
 			import std.algorithm : max;
 
-			context.clearColor(Color.fromHex("#ff7f00"));
+			application.display.gpuContext.clearColorBuffer(surface, FVec4(1, 0.5, 0, 1));
 
 			// GL.enable(GL.SCISSOR_TEST);
 			// GL.scissor(20, bufferSize.y - 20 - (impl.size.y - 40), max(0, impl.size.x - 40), max(0, impl.size.y - 40));

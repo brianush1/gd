@@ -392,11 +392,6 @@ struct TVec4(T) {
 	ref inout(T) z() inout @property { return components[2]; }
 	ref inout(T) w() inout @property { return components[3]; }
 
-	ref inout(T) r() inout @property { return components[0]; }
-	ref inout(T) g() inout @property { return components[1]; }
-	ref inout(T) b() inout @property { return components[2]; }
-	ref inout(T) a() inout @property { return components[3]; }
-
 	ref inout(T) opIndex(size_t index) inout {
 		return components[index];
 	}

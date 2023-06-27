@@ -5,7 +5,7 @@ import gd.signal;
 import gd.graphics;
 import gd.cursor;
 import gd.math;
-import gd.graphics.context;
+import gd.internal.gpu;
 
 struct WindowInitOptions {
 	int depthSize = 16;
@@ -74,7 +74,7 @@ enum WindowState : uint {
 	Topmost    = 0x0020,
 }
 
-alias PaintHandler = IRect delegate(IRect, IVec2, GraphicsContext);
+alias PaintHandler = IRect delegate(IRect, IVec2, GPUSurface);
 
 struct KeyInfo {
 	Modifiers mods;
@@ -115,8 +115,6 @@ abstract class Window : Resource {
 	inout(Pointer) primaryPointer() inout @property {
 		return pointers[0];
 	}
-
-	abstract inout(GraphicsContext) graphicsContext() inout @property;
 
 	// TODO: this can be handled commonly
 	// void enableInputEmulation(InputEmulation emulation) {}

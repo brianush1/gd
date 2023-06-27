@@ -2,9 +2,9 @@ module gd.internal.x11.window;
 import gd.internal.x11.display;
 import gd.internal.x11.device;
 import gd.internal.x11.exception;
+import gd.internal.gl.opengl;
 import gd.internal.window;
-import gd.graphics.gl.context;
-import gd.graphics.context;
+import gd.internal.gpu;
 import gd.resource;
 import gd.graphics;
 import gd.keycode;
@@ -305,7 +305,6 @@ private:
 	X11.Pixmap backBuffer;
 	GLX.GLXPixmap glxBackBuffer;
 	bool oversizeBuffer;
-	GraphicsContext m_graphicsContext;
 
 	X11.Cursor hiddenCursor;
 
@@ -436,12 +435,10 @@ private:
 
 		enforce!X11Exception(glxContext != null, "could not create OpenGL context");
 
-		GLGraphicsContext glGraphicsContext = new GLGraphicsContext();
-		glGraphicsContext.makeCurrent = {
+		(cast(GLContext) display.gpuContext).registerWindow(this, {
 			// TODO: don't call this if it's already the current context
 			GLX.makeCurrent(display.native, glxBackBuffer, glxContext);
-		};
-		m_graphicsContext = glGraphicsContext;
+		});
 
 		gcontext = X11.createGC(display.native, m_native, 0, null);
 		X11.setGraphicsExposures(display.native, gcontext, X11.False);
@@ -454,12 +451,12 @@ private:
 		X11.sync(display.native, X11.False);
 
 		// TODO: vsync
-		makeGLContextCurrent(); // turn vsync off (I don't know if it's on tbh!)
+		/+makeGLContextCurrent(); // turn vsync off (I don't know if it's on tbh!)
 		GLX.swapIntervalEXT(display.native, native, 0);
 		auto glXSwapIntervalMESA = cast(int function(int)) GLX.getProcAddress(cast(const(ubyte)*) "glXSwapIntervalMESA".ptr);
 		if (glXSwapIntervalMESA !is null) {
 			glXSwapIntervalMESA(0);
-		}
+		}+/
 
 		title = options.title;
 		m_size = options.size;
@@ -676,6 +673,7 @@ private:
 				// X11.setForeground(display.native, gcontext, 0xFF00FFFF);
 				// X11.fillRectangle(display.native, backBuffer, gcontext, 0, 0, bufferSize.x, bufferSize.y);
 				glxBackBuffer = GLX.createPixmap(display.native, fbconfig, backBuffer, null);
+				(cast(GLContext) display.gpuContext).switchToSurface(display.gpuContext.surfaceOf(this), Yes.force);
 
 				return true;
 			}
@@ -962,17 +960,6 @@ public:
 		return result;
 	}
 
-	private void makeGLContextCurrent() {
-		// some events may keep firing after the window is closed
-		if (disposed) return;
-
-		GLX.makeCurrent(display.native, native, glxContext);
-	}
-
-	override inout(GraphicsContext) graphicsContext() inout @property {
-		return m_graphicsContext;
-	}
-
 	private PaintHandler m_paintHandler;
 	override void setPaintHandler(PaintHandler handler) {
 		m_paintHandler = handler;
@@ -998,11 +985,13 @@ public:
 			return;
 		}
 
-		GLX.makeCurrent(display.native, glxBackBuffer, glxContext);
+		GPUSurface surface = display.gpuContext.surfaceOf(this);
+		(cast(GLContext) display.gpuContext).switchToSurface(surface);
 		GL.drawBuffer(GL.FRONT_LEFT);
 
-		m_graphicsContext.viewport(IVec2(0, bufferSize.y - size.y), size);
-		IRect paintedRegion = m_paintHandler(region, bufferSize, m_graphicsContext);
+		// FIXME: TODO: viewport
+		GL.viewport(0, bufferSize.y - size.y, size.x, size.y);
+		IRect paintedRegion = m_paintHandler(region, bufferSize, surface);
 		IRect updateRegion = paintedRegion.clipArea(IRect(IVec2(0, 0), size));
 
 		GL.Sync fence = GL.fenceSync(GL.SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -1018,9 +1007,6 @@ public:
 		else {
 			GL.clientWaitSync(fence, GL.SYNC_FLUSH_COMMANDS_BIT, 50_000_000); // 50 ms = 20 fps
 		}
-
-		import gd.internal.application : application;
-		import std.datetime : Duration, msecs;
 
 		X11.copyArea(display.native,
 			backBuffer, // source
