@@ -74,8 +74,8 @@ struct TPath(T) {
 	auto opSlice() const {
 		struct PathRange {
 			void popFront() { index += sizeOfCommand(front.type); }
-			ref front() => *cast(immutable(Command)*) &data[index];
-			bool empty() => index >= data.length;
+			ref front() { return *cast(immutable(Command)*) &data[index]; }
+			bool empty() { return index >= data.length; }
 		private:
 			size_t index;
 			immutable(ubyte)[] data;
@@ -117,12 +117,12 @@ struct TPath(T) {
 
 	ref TPath!T opOpAssign(string op, R)(const(R) value)
 		if (op == "~" && !is(R : Command))
-		=> this ~= Command(value);
+		{ return this ~= Command(value); }
 
-	ref TPath!T moveTo(TVec2!T point) => this ~= Move(point);
-	ref TPath!T lineTo(TVec2!T end) => this ~= Line(end);
-	ref TPath!T quadTo(TVec2!T c1, TVec2!T end) => this ~= BezierQuad(c1, end);
-	ref TPath!T cubicTo(TVec2!T c1, TVec2!T c2, TVec2!T end) => this ~= BezierCubic(c1, c2, end);
-	ref TPath!T close() => this ~= Close();
+	ref TPath!T moveTo(TVec2!T point) { return this ~= Move(point); }
+	ref TPath!T lineTo(TVec2!T end) { return this ~= Line(end); }
+	ref TPath!T quadTo(TVec2!T c1, TVec2!T end) { return this ~= BezierQuad(c1, end); }
+	ref TPath!T cubicTo(TVec2!T c1, TVec2!T c2, TVec2!T end) { return this ~= BezierCubic(c1, c2, end); }
+	ref TPath!T close() { return this ~= Close(); }
 
 }
