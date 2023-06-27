@@ -382,7 +382,7 @@ void main(string[] args) {
 			posix: ["libX11.so.6","libX11.so"],
 		};
 
-		write("../source/gd/bindings/x11.d", generate(x11));
+		write("../bindings/source/gd/bindings/x11.d", generate(x11));
 
 		writeln("done");
 	}
@@ -415,7 +415,7 @@ void main(string[] args) {
 			},
 		};
 
-		write("../source/gd/bindings/xfixes.d", generate(xfixes));
+		write("../bindings/source/gd/bindings/xfixes.d", generate(xfixes));
 
 		writeln("done");
 	}
@@ -445,7 +445,7 @@ void main(string[] args) {
 			},
 		};
 
-		write("../source/gd/bindings/xcursor.d", generate(xcursor));
+		write("../bindings/source/gd/bindings/xcursor.d", generate(xcursor));
 
 		writeln("done");
 	}
@@ -479,7 +479,7 @@ void main(string[] args) {
 			},
 		};
 
-		write("../source/gd/bindings/xi2.d", generate(xi2));
+		write("../bindings/source/gd/bindings/xi2.d", generate(xi2));
 
 		writeln("done");
 
@@ -536,7 +536,7 @@ void main(string[] args) {
 			},
 		};
 
-		write("../source/gd/bindings/xsync.d", generate(xsync));
+		write("../bindings/source/gd/bindings/xsync.d", generate(xsync));
 
 		writeln("done");
 	}
@@ -582,7 +582,7 @@ void main(string[] args) {
 			},
 		};
 
-		write("../source/gd/bindings/gl.d", generate(gl)
+		write("../bindings/source/gd/bindings/gl.d", generate(gl)
 			.replaceAll(regex(r"\bGL_([A-Z_][A-Z0-9_]*)\b"), "$1")
 			.replaceAll!((Captures!string m) {
 				if (m[1][0] == 'u') {
@@ -631,7 +631,7 @@ void main(string[] args) {
 			},
 		};
 
-		write("../source/gd/bindings/glx.d", generate(glx)
+		write("../bindings/source/gd/bindings/glx.d", generate(glx)
 			.replaceAll(regex(r"\bGLX_([A-Z_]+)\b"), "$1")
 			.replaceAll!((Captures!string m) {
 				if (m[1][0] == 'u') {

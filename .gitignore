@@ -10,6 +10,7 @@ gd.dylib
 gd.dll
 gd.a
 libgd.a
+libgd_bindings.a
 gd.lib
 gd-test-*
 *.exe

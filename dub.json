@@ -27,10 +27,19 @@
 	],
 	"copyright": "Copyright © 2022, Brian",
 	"dependencies": {
+		"gd:bindings": "*",
 		"imageformats": "~>7.0.2",
 		"weakset": "~>1.0.1"
 	},
 	"description": "GUI for D",
 	"license": "BSL-1.0",
-	"name": "gd"
+	"name": "gd",
+	"subPackages": [
+		{
+			"name": "bindings",
+			"targetType": "library",
+			"sourcePaths": ["bindings/source"],
+			"importPaths": ["bindings/source"]
+		}
+	]
 }
