@@ -1,9 +1,9 @@
 module gd.geom.path;
 import gd.math;
 import std.sumtype;
+import std.traits;
 
 alias Path = TPath!double;
-alias IPath = TPath!int;
 alias FPath = TPath!float;
 alias RPath = TPath!real;
 
@@ -16,7 +16,7 @@ enum CommandType : ubyte {
 	Close,
 }
 
-struct TPath(T) {
+struct TPath(T) if (isFloatingPoint!T) {
 
 	struct Command {
 		CommandType type;
@@ -61,14 +61,6 @@ struct TPath(T) {
 			case CommandType.Arc: return Command.arc.offsetof + Arc.sizeof;
 			case CommandType.Close: return Command.close.offsetof + Close.sizeof;
 		}
-	}
-
-	int opApply(scope int delegate(ref immutable(Command)) dg) const {
-		foreach (ref cmd; this[]) {
-			int result = dg(cmd);
-			if (result) { return result; }
-		}
-		return 0;
 	}
 
 	auto opSlice() const {
@@ -124,5 +116,30 @@ struct TPath(T) {
 	ref TPath!T quadTo(TVec2!T c1, TVec2!T end) { return this ~= BezierQuad(c1, end); }
 	ref TPath!T cubicTo(TVec2!T c1, TVec2!T c2, TVec2!T end) { return this ~= BezierCubic(c1, c2, end); }
 	ref TPath!T close() { return this ~= Close(); }
+
+	ref TPath!T moveTo(T x, T y) { return moveTo(TVec2!T(x, y)); }
+	ref TPath!T lineTo(T x, T y) { return lineTo(TVec2!T(x, y)); }
+
+	ref TPath!T quadTo(TVec2!T c1,        T x, T y     )  {
+		return   quadTo(c1,                TVec2!T(x, y)); }
+	ref TPath!T quadTo(T c1x, T c1y,      TVec2!T end  )  {
+		return   quadTo(TVec2!T(c1x, c1y), end          ); }
+	ref TPath!T quadTo(T c1x, T c1y, T x, T y          )  {
+		return   quadTo(TVec2!T(c1x, c1y), TVec2!T(x, y)); }
+
+	ref TPath!T cubicTo(TVec2!T c1,        T c2x, T c2y,      T x, T y     )  {
+		return   cubicTo(c1,                TVec2!T(c2x, c2y), TVec2!T(x, y)); }
+	ref TPath!T cubicTo(T c1x, T c1y,      TVec2!T c2,        T x, T y     )  {
+		return   cubicTo(TVec2!T(c1x, c1y), c2,                TVec2!T(x, y)); }
+	ref TPath!T cubicTo(T c1x, T c1y,      T c2x, T c2y,      TVec2!T end  )  {
+		return   cubicTo(TVec2!T(c1x, c1y), TVec2!T(c2x, c2y), end          ); }
+	ref TPath!T cubicTo(TVec2!T c1,        TVec2!T c2,        T x, T y     )  {
+		return   cubicTo(c1,                c2,                TVec2!T(x, y)); }
+	ref TPath!T cubicTo(TVec2!T c1,        T c2x, T c2y,      TVec2!T end  )  {
+		return   cubicTo(c1,                TVec2!T(c2x, c2y), end          ); }
+	ref TPath!T cubicTo(T c1x, T c1y,      TVec2!T c2,        TVec2!T end  )  {
+		return   cubicTo(TVec2!T(c1x, c1y), c2,                end          ); }
+	ref TPath!T cubicTo(T c1x, T c1y,      T c2x, T c2y,      T x, T y     )  {
+		return   cubicTo(TVec2!T(c1x, c1y), TVec2!T(c2x, c2y), TVec2!T(x, y)); }
 
 }

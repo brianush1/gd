@@ -1,5 +1,6 @@
-module gd.math.matrix;
-import gd.math.vector;
+module gd.math.mat;
+import gd.math.frame;
+import gd.math.vec;
 import std.traits;
 import std.math;
 
@@ -7,11 +8,6 @@ alias Mat4 = TMat4!double;
 alias IMat4 = TMat4!int;
 alias FMat4 = TMat4!float;
 alias RMat4 = TMat4!real;
-
-alias Frame3 = TFrame3!double;
-alias IFrame3 = TFrame3!int;
-alias FFrame3 = TFrame3!float;
-alias RFrame3 = TFrame3!real;
 
 // alias Mat3 = TMat3!double;
 // alias IMat3 = TMat3!int;
@@ -62,10 +58,10 @@ struct TFrame2(T) {
 	}
 
 	static if (isFloatingPoint!T) {
-		static TFrame2!T rotate(T theta) {
+		static TFrame2!T angles(T theta) {
 			return TFrame2!T.fromComponents(
-				cos(-theta), sin(-theta), 0,
-				-sin(-theta), cos(-theta), 0,
+				cos(theta), -sin(theta), 0,
+				sin(theta), cos(theta), 0,
 			);
 		}
 	}
@@ -133,7 +129,7 @@ struct TFrame2(T) {
 struct TMat4(T) {
 // fields:
 
-	private T[16] flat = [
+	T[16] components = [
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
@@ -142,14 +138,18 @@ struct TMat4(T) {
 
 // matrix constructors:
 
+	this(T[16] components) {
+		this.components = components;
+	}
+
 	this(V)(TMat4!V base) {
 		foreach (i; 0 .. 16) {
-			flat[i] = cast(T) base.flat[i];
+			components[i] = cast(T) base.components[i];
 		}
 	}
 
 	this(V)(TFrame3!V base) {
-		flat = [
+		components = [
 			base.right.x, base.up.x, base.forward.x, base.position.x,
 			base.right.y, base.up.y, base.forward.y, base.position.y,
 			base.right.z, base.up.z, base.forward.z, base.position.z,
@@ -157,20 +157,14 @@ struct TMat4(T) {
 		];
 	}
 
-	static TMat4!T fromComponents(
-		T m00, T m01, T m02, T m03,
-		T m10, T m11, T m12, T m13,
-		T m20, T m21, T m22, T m23,
-		T m30, T m31, T m32, T m33,
-	) {
-		TMat4!T result;
-		result.flat = [
-			m00, m01, m02, m03,
-			m10, m11, m12, m13,
-			m20, m21, m22, m23,
-			m30, m31, m32, m33,
+	this(T x, T y, T z) { this(TVec3!T(x, y, z)); }
+	this(TVec3!T position) {
+		components = [
+			1, 0, 0, position.x,
+			0, 1, 0, position.y,
+			0, 0, 1, position.z,
+			0, 0, 0, 1,
 		];
-		return result;
 	}
 
 	static if (isFloatingPoint!T) {
@@ -184,87 +178,85 @@ struct TMat4(T) {
 		*   far = The Z-coordinate of the far clipping plane; far > near
 		* Returns: A perspective matrix with the given parameters, or the identity matrix if any parameters are out of range
 		*/
-		static TMat4!T perspectiveProjection(T fov, T aspectRatio, T near, T far) {
+		static TMat4!T perspective(T fov, T aspectRatio, T near, T far) {
 			if (0 >= fov || fov >= PI || aspectRatio <= 0 || near <= 0 || far <= near) {
 				return TMat4!T.init;
 			}
 
 			T y = 1 / tan(fov / 2);
-			return TMat4!T.fromComponents(
+			return TMat4!T([
 				y / aspectRatio, 0, 0, 0,
 				0, y, 0, 0,
 				0, 0, -far / (far - near), -2 * near * far / (far - near),
 				0, 0, -1, 0,
-			);
+			]);
 		}
 
-		static TMat4!T orthographicProjection(T left, T right, T bottom, T top, T near, T far) {
-			return TMat4!T.fromComponents(
+		static TMat4!T orthographic(T left, T right, T bottom, T top, T near, T far) {
+			return TMat4!T([
 				2.0 / (right - left), 0, 0, -(right + left) / (right - left),
 				0, 2.0 / (top - bottom), 0, -(top + bottom) / (top - bottom),
 				0, 0, -2.0 / (far - near), -(far + near) / (far - near),
 				0, 0, 0, 1.0,
-			);
+			]);
 		}
 
-		static TMat4!T orthographicProjection(Vec2 viewPlaneSize, T near, T far) {
-			return orthographicProjection(
+		static TMat4!T orthographic(Vec2 viewPlaneSize, T near, T far) {
+			return orthographic(
 				-viewPlaneSize.x / 2, viewPlaneSize.x / 2,
 				-viewPlaneSize.y / 2, viewPlaneSize.y / 2,
 				near, far,
 			);
 		}
 
-		static TMat4!T fromEulerAngles(T x, T y, T z) {
+		static TMat4!T angles(T x, T y, T z) {
 			if (y == 0 && z == 0) { // rotate X
-				return TMat4!T.fromComponents(
+				return TMat4!T([
 					1, 0, 0, 0,
-					0, cos(-x), sin(-x), 0,
-					0, -sin(-x), cos(-x), 0,
+					0, cos(x), -sin(x), 0,
+					0, sin(x), cos(x), 0,
 					0, 0, 0, 1,
-				);
+				]);
 			}
 			else if (x == 0 && z == 0) { // rotate Y
-				return TMat4!T.fromComponents(
-					cos(-y), 0, -sin(-y), 0,
+				return TMat4!T([
+					cos(y), 0, sin(y), 0,
 					0, 1, 0, 0,
-					sin(-y), 0, cos(-y), 0,
+					-sin(y), 0, cos(y), 0,
 					0, 0, 0, 1,
-				);
+				]);
 			}
 			else if (x == 0 && y == 0) { // rotate Z
-				return TMat4!T.fromComponents(
-					cos(-z), sin(-z), 0, 0,
-					-sin(-z), cos(-z), 0, 0,
+				return TMat4!T([
+					cos(z), -sin(z), 0, 0,
+					sin(z), cos(z), 0, 0,
 					0, 0, 1, 0,
 					0, 0, 0, 1,
-				);
+				]);
 			}
 			else { // rotate combination
-				return TMat4!T.fromEulerAngles(x, 0, 0)
-					.mul(TMat4!T.fromEulerAngles(0, y, 0))
-					.mul(TMat4!T.fromEulerAngles(0, 0, z));
+				return TMat4!T.angles(x, 0, 0)
+					* TMat4!T.angles(0, y, 0)
+					* TMat4!T.angles(0, 0, z);
 			}
 		}
 	}
 
-	static TMat4!T fromPosition(TVec3!T position) {
-		return TMat4!T.fromComponents(
-			1, 0, 0, position.x,
-			0, 1, 0, position.y,
-			0, 0, 1, position.z,
+	static TMat4!T scale(T x, T y, T z) { return scale(TVec3!T(x, y, z)); }
+	static TMat4!T scale(T all) { return scale(TVec3!T(all, all, all)); }
+	static TMat4!T scale(TVec3!T scale) {
+		return TMat4!T([
+			scale.x, 0, 0, 0,
+			0, scale.y, 0, 0,
+			0, 0, scale.z, 0,
 			0, 0, 0, 1,
-		);
-	}
-
-	static TMat4!T fromPosition(T x, T y, T z) {
-		return fromPosition(TVec3!T(x, y, z));
+		]);
 	}
 
 // indexing:
 
 	ref inout(T) opIndex(size_t r, size_t c) return inout {
-		return flat[r * 4 + c];
+		return components[r * 4 + c];
 	}
 
 	TVec4!T row(size_t r) const {
@@ -296,28 +288,22 @@ struct TMat4(T) {
 	static if (isFloatingPoint!T) {
 		TMat4!T lookAt(TVec3!T value, TVec3!T up = TVec3!T(0, 1, 0)) const {
 			TVec3!T forward = (value - position).unit;
-			if (forward.magnitude < 1e-9) {
-				return TMat4!T.fromPosition(position);
-			}
+			if (forward.magnitude < 1e-9)
+				return TMat4!T(position);
 
 			TVec3!T vx = forward.cross(up.unit);
 
-			if (vx.magnitude < 1e-9) {
-				vx = TVec3!T(1, 0, 0);
-			}
-			else {
-				vx = vx.unit;
-			}
+			vx = vx.magnitude < 1e-9 ? TVec3!T(1, 0, 0) : vx.unit;
 
 			TVec3!T vy = vx.cross(forward).unit;
 			TVec3!T vz = vx.cross(vy).unit;
 
-			return TMat4!T.fromComponents(
+			return TMat4!T([
 				vx.x, vy.x, vz.x, position.x,
 				vx.y, vy.y, vz.y, position.y,
 				vx.z, vy.z, vz.z, position.z,
 				0, 0, 0, 1,
-			);
+			]);
 		}
 
 		TMat4!T lookAt(T x, T y, T z) const {
@@ -327,14 +313,7 @@ struct TMat4(T) {
 
 // basic operations:
 
-	/**
-
-	Generalized TMat4!T multiplication
-
-	This method multiplies this matrix by the given parameter and returns the result.
-
-	*/
-	auto mul(R)(TMat4!R other) const {
+	auto opBinary(string op, R)(TMat4!R other) const if (op == "*") {
 		alias ResT = typeof(mixin("cast(T) 0 * cast(R) 0"));
 		TMat4!ResT result;
 
@@ -346,6 +325,21 @@ struct TMat4(T) {
 				}
 				result[i, j] = dot;
 			}
+		}
+
+		return result;
+	}
+
+	auto opBinary(string op, R)(TVec4!R other) const if (op == "*") {
+		alias ResT = typeof(mixin("cast(T) 0 * cast(R) 0"));
+		TVec4!ResT result;
+
+		foreach (i; 0 .. 4) {
+			ResT dot = 0;
+			foreach (k; 0 .. 4) {
+				dot += this[i, k] * other[k];
+			}
+			result[i] = dot;
 		}
 
 		return result;
@@ -420,12 +414,12 @@ struct TMat4(T) {
 		if (determinantRecip == 0)
 			return TMat4!T.init;
 
-		return TMat4!T.fromComponents(
+		return TMat4!T([
 			M_00 / determinantRecip, M_01 / determinantRecip, M_02 / determinantRecip, M_03 / determinantRecip,
 			M_10 / determinantRecip, M_11 / determinantRecip, M_12 / determinantRecip, M_13 / determinantRecip,
 			M_20 / determinantRecip, M_21 / determinantRecip, M_22 / determinantRecip, M_23 / determinantRecip,
 			M_30 / determinantRecip, M_31 / determinantRecip, M_32 / determinantRecip, M_33 / determinantRecip,
-		);
+		]);
 	}
 
 	auto translate(R)(TVec3!R vec) const {
@@ -444,19 +438,14 @@ struct TMat4(T) {
 // conversions:
 
 	static if (isFloatingPoint!T) {
+		// TODO: this is untested
 		TVec4!T toQuaternion() const {
 			import std.algorithm : max;
 
 			double sign(double x) {
-				if (x < 0) {
-					return -1;
-				}
-				else if (x > 0) {
-					return 1;
-				}
-				else {
-					return x; // 0 or NaN
-				}
+				return x < 0 ? -1
+					: x > 0 ? 1
+					: x; // 0 or NaN
 			}
 
 			TVec4!T result = TVec4!T(
@@ -512,208 +501,6 @@ struct TMat4(T) {
 			res ~= line[1 .. $] ~ "\n";
 		}
 		return "\n" ~ res[0 .. $ - 1];
-	}
-
-}
-
-struct TFrame3(T) {
-// fields:
-
-	TVec3!T right;
-	TVec3!T up;
-	TVec3!T forward;
-	TVec3!T position;
-
-// matrix constructors:
-
-	this(V)(TFrame3!V base) {
-		right = TVec3!T(base.right);
-		up = TVec3!T(base.up);
-		forward = TVec3!T(base.forward);
-		position = TVec3!T(base.position);
-	}
-
-	static TFrame3!T fromVectors(
-		TVec3!T right,
-		TVec3!T up,
-		TVec3!T forward,
-		TVec3!T position,
-	) {
-		TFrame3!T result;
-		result.right = right;
-		result.up = up;
-		result.forward = forward;
-		result.position = position;
-		return result;
-	}
-
-	static TFrame3!T fromComponents(
-		T m00, T m01, T m02, T m03,
-		T m10, T m11, T m12, T m13,
-		T m20, T m21, T m22, T m23,
-	) {
-		return TFrame3!T.fromVectors(
-			TVec3!T(m00, m10, m20),
-			TVec3!T(m01, m11, m21),
-			TVec3!T(m02, m12, m22),
-			TVec3!T(m03, m13, m23),
-		);
-	}
-
-	static if (isFloatingPoint!T) {
-		static TFrame3!T fromEulerAngles(T x, T y, T z) {
-			if (y == 0 && z == 0) { // rotate X
-				return TFrame3!T.fromComponents(
-					1, 0, 0, 0,
-					0, cos(-x), sin(-x), 0,
-					0, -sin(-x), cos(-x), 0,
-				);
-			}
-			else if (x == 0 && z == 0) { // rotate Y
-				return TFrame3!T.fromComponents(
-					cos(-y), 0, -sin(-y), 0,
-					0, 1, 0, 0,
-					sin(-y), 0, cos(-y), 0,
-				);
-			}
-			else if (x == 0 && y == 0) { // rotate Z
-				return TFrame3!T.fromComponents(
-					cos(-z), sin(-z), 0, 0,
-					-sin(-z), cos(-z), 0, 0,
-					0, 0, 1, 0,
-				);
-			}
-			else { // rotate combination
-				return TFrame3!T.fromEulerAngles(x, 0, 0)
-					.mul(TFrame3!T.fromEulerAngles(0, y, 0))
-					.mul(TFrame3!T.fromEulerAngles(0, 0, z));
-			}
-		}
-	}
-
-	static TFrame3!T fromPosition(TVec3!T position) {
-		return TFrame3!T.fromComponents(
-			1, 0, 0, position.x,
-			0, 1, 0, position.y,
-			0, 0, 1, position.z,
-		);
-	}
-
-	static TFrame3!T fromPosition(T x, T y, T z) {
-		return fromPosition(TVec3!T(x, y, z));
-	}
-
-// transformations:
-
-	static if (isFloatingPoint!T) {
-		TFrame3!T lookAt(TVec3!T value, TVec3!T up = TVec3!T(0, 1, 0)) const {
-			TVec3!T direction = (value - position).unit;
-			if (direction.magnitude < 1e-9) {
-				return TFrame3!T.fromPosition(position);
-			}
-
-			TVec3!T vx = direction.cross(up.unit);
-
-			if (vx.magnitude < 1e-9) {
-				vx = TVec3!T(1, 0, 0);
-			}
-			else {
-				vx = vx.unit;
-			}
-
-			TVec3!T vy = vx.cross(direction).unit;
-			TVec3!T vz = vx.cross(vy).unit;
-
-			return TFrame3!T.fromComponents(
-				vx.x, vy.x, vz.x, position.x,
-				vx.y, vy.y, vz.y, position.y,
-				vx.z, vy.z, vz.z, position.z,
-			);
-		}
-
-		TFrame3!T lookAt(T x, T y, T z) const {
-			return lookAt(TVec3!T(x, y, z));
-		}
-	}
-
-// basic operations:
-
-	/**
-
-	Generalized TFrame3!T multiplication
-
-	This method multiplies this frame by the given parameter and returns the result.
-
-	*/
-	auto mul(R)(TFrame3!R other) const {
-		alias ResT = typeof(mixin("cast(T) 0 * cast(R) 0"));
-		auto mat = TVec3!(TVec3!T)(right, up, forward);
-		return TFrame3!ResT.fromVectors(
-			mat.dot(other.right),
-			mat.dot(other.up),
-			mat.dot(other.forward),
-			mat.dot(other.position) + position,
-		);
-	}
-
-	TFrame3!T inverse() const {
-		T determinantRecip = right.magnitudeSq;
-		return TFrame3!T.fromVectors(
-			TVec3!T(right.x, up.x, forward.x) / determinantRecip,
-			TVec3!T(right.y, up.y, forward.y) / determinantRecip,
-			TVec3!T(right.z, up.z, forward.z) / determinantRecip,
-			TVec3!T(position.dot(right), position.dot(up), position.dot(forward)) / -determinantRecip,
-		);
-	}
-
-	auto translate(R)(TVec3!R vec) const {
-		alias ResT = typeof(mixin("cast(T) 0 + cast(R) 0"));
-		TFrame3!ResT result = this;
-		result.position = position + vec;
-		return result;
-	}
-
-	TFrame3!T translate(T x, T y, T z) const {
-		return translate(TVec3!T(x, y, z));
-	}
-
-// conversions:
-
-	static if (isFloatingPoint!T) {
-		TVec4!T toQuaternion() const {
-			import std.algorithm : max;
-
-			double sign(double x) {
-				if (x < 0) {
-					return -1;
-				}
-				else if (x > 0) {
-					return 1;
-				}
-				else {
-					return x; // 0 or NaN
-				}
-			}
-
-			TVec4!T result = TVec4!T(
-				sqrt(max(0, 1 + right.x - up.y - forward.z)) / 2,
-				sqrt(max(0, 1 - right.x + up.y - forward.z)) / 2,
-				sqrt(max(0, 1 - right.x - up.y + forward.z)) / 2,
-				sqrt(max(0, 1 + right.x + up.y + forward.z)) / 2,
-			);
-
-			result.x *= sign(result.x * (up.z - forward.y));
-			result.x *= sign(result.y * (forward.x - right.z));
-			result.x *= sign(result.z * (right.y - up.x));
-
-			return result;
-		}
-	}
-
-	string toString() const {
-		import std.conv : text;
-
-		return text(position, ", ", right, ", ", up, ", ", forward);
 	}
 
 }

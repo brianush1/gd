@@ -1,7 +1,6 @@
 module gd.internal.display;
 import gd.internal.window;
 import gd.internal.gpu;
-import gd.graphics;
 import gd.resource;
 
 abstract class Display : Resource {

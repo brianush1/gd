@@ -1,5 +1,5 @@
 module gd.gui.event;
-import gd.gui.element;
+import gd.gui.widgets;
 
 class Event {
 
@@ -9,7 +9,7 @@ class Event {
 	private bool m_propagationStopped = false;
 	bool propagationStopped() const @property { return m_propagationStopped; }
 
-	Element target;
+	Widget target;
 
 	void preventDefault() {
 		m_defaultPrevented = true;
@@ -18,5 +18,12 @@ class Event {
 	void stopPropagation() {
 		m_propagationStopped = true;
 	}
+
+}
+
+class ChangeEvent(T) : Event {
+
+	T previousValue;
+	T value;
 
 }

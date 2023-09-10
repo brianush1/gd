@@ -51,6 +51,7 @@ private:
 			};
 			XI2.setMask(mask.mask, XI2.XI_HierarchyChanged);
 			XI2.setMask(mask.mask, XI2.XI_DeviceChanged);
+			XI2.setMask(mask.mask, XI2.XI_RawMotion);
 			XI2.selectEvents(display.native, root, &mask, 1);
 			X11.sync(display.native, X11.False);
 
@@ -126,19 +127,11 @@ private:
 		case XI2.XI_DeviceChanged:
 			XI2.XIDeviceChangedEvent* ev = cast(XI2.XIDeviceChangedEvent*) cookie.data;
 
-			// if (ev.reason == XI2.XISlaveSwitch) {
-				// writefln!"Slave Switch %d %d"(ev.deviceid, ev.sourceid);
-
 			XI2.XIAnyClassInfo*[] classInfos = ev.classes[0 .. ev.num_classes];
 
 			if (ev.deviceid in devices) {
 				devices[ev.deviceid].update(classInfos);
 			}
-
-			// }
-			// else if (ev.reason == XI2.XIDeviceChange) {
-			// 	// do nothing right now
-			// }
 
 			break;
 		case XI2.XI_Enter:
@@ -203,6 +196,15 @@ private:
 			if (X11Window* window = ev.event in display.windowMap) window.processXI2Event(ev);
 
 			break;
+		case XI2.XI_RawMotion:
+			XI2.XIRawEvent* ev = cast(XI2.XIRawEvent*) cookie.data;
+
+			// TODO: do something better than dispatching raw motion events to everyone
+			foreach (window; display.windowMap.byValue) {
+				window.processXI2Event(ev);
+			}
+
+			break;
 		default:
 			break;
 		}
@@ -253,6 +255,10 @@ enum ValuatorRole {
 	ScrollHorizontal,
 	ScrollVertical,
 	Pressure,
+	RelX,
+	RelY,
+	AbsX,
+	AbsY,
 }
 
 final class Valuator {
@@ -324,7 +330,7 @@ class X11Device : Resource {
 
 	protected override void disposeImpl() {}
 
-	Signal!() onValuatorsChange;
+	Signal!() onUpdate;
 
 	private Valuator[] m_valuators;
 	inout(Valuator)[] valuators() inout @property {
@@ -389,6 +395,18 @@ class X11Device : Resource {
 				if (valuator.label == "Abs Pressure") {
 					valuator.m_role = ValuatorRole.Pressure;
 				}
+				else if (valuator.label == "Rel X") {
+					valuator.m_role = ValuatorRole.RelX;
+				}
+				else if (valuator.label == "Rel Y") {
+					valuator.m_role = ValuatorRole.RelY;
+				}
+				else if (valuator.label == "Abs X") {
+					valuator.m_role = ValuatorRole.AbsX;
+				}
+				else if (valuator.label == "Abs Y") {
+					valuator.m_role = ValuatorRole.AbsY;
+				}
 
 				m_valuators ~= valuator;
 			}
@@ -411,7 +429,7 @@ class X11Device : Resource {
 			}
 		}
 
-		onValuatorsChange.emit();
+		onUpdate.emit();
 	}
 
 }

@@ -1,4 +1,4 @@
-module gd.math.rectangle;
+module gd.math.rect;
 import gd.math;
 import std.typecons;
 
@@ -32,6 +32,16 @@ struct TRect(T) {
 
 	this(T x, T y, T width, T height) {
 		position = TVec2!T(x, y);
+		size = TVec2!T(width, height);
+	}
+
+	this(U)(T x, T y, TVec2!U size) {
+		position = TVec2!T(x, y);
+		this.size = size;
+	}
+
+	this(U)(TVec2!U position, T width, T height) {
+		this.position = position;
 		size = TVec2!T(width, height);
 	}
 

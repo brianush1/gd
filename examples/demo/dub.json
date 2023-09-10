@@ -9,6 +9,9 @@
 		},
 		"imageformats": "~>7.0.2"
 	},
+	"stringImportPaths": [
+		"assets"
+	],
 	"description": "GD demo app",
 	"license": "BSL-1.0",
 	"name": "demo"

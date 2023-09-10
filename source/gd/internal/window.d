@@ -2,7 +2,7 @@ module gd.internal.window;
 import gd.resource;
 import gd.keycode;
 import gd.signal;
-import gd.graphics;
+import gd.graphics.color;
 import gd.cursor;
 import gd.math;
 import gd.internal.gpu;
@@ -17,11 +17,6 @@ struct WindowInitOptions {
 	Color backgroundColor = Color.fromHex("#fff");
 }
 
-enum PointerType {
-	Mouse,
-	Touch,
-}
-
 enum PointerFlags {
 	None              = 0x0000,
 	CanSetPosition    = 0x0001,
@@ -34,7 +29,6 @@ enum PointerFlags {
 
 abstract class Pointer : Resource {
 
-	abstract PointerType type() const @property;
 	abstract PointerFlags flags() const @property;
 
 	Signal!Vec2 onPositionChange;
@@ -49,8 +43,8 @@ abstract class Pointer : Resource {
 
 	abstract void cursor(Cursors value) @property;
 
-	/++ relative motion event; see also onPositionChange +/
-	Signal!Vec2 onMovement;
+	/++ raw relative motion event; see also onPositionChange +/
+	Signal!Vec2 onMotion;
 	Signal!Vec2 onScroll;
 	Signal!() onEnter;
 	Signal!() onLeave;
@@ -96,6 +90,9 @@ abstract class Window : Resource {
 	Signal!KeyInfo onKeyRelease;
 	Signal!() onFocusEnter;
 	Signal!() onFocusLeave;
+	Signal!(uint, Vec2) onTouchStart;
+	Signal!(uint, Vec2) onTouchMove;
+	Signal!(uint) onTouchEnd;
 
 	Signal!IVec2 onSizeChange;
 	Signal!WindowState onStateChange;
@@ -116,15 +113,14 @@ abstract class Window : Resource {
 		return pointers[0];
 	}
 
-	// TODO: this can be handled commonly
-	// void enableInputEmulation(InputEmulation emulation) {}
-	// void disableInputEmulation(InputEmulation emulation) {}
-
+	abstract void setIcon(IVec2 size, const(uint)[] data);
 	abstract void setPaintHandler(PaintHandler handler);
 	abstract void invalidate(IRect region);
 
 	abstract string title() const @property;
 	abstract void title(string value) @property;
+
+	abstract IVec2 bufferSize() const @property;
 
 	abstract IVec2 size() const @property;
 	abstract void size(IVec2 value) @property;

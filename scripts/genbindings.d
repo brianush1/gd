@@ -33,6 +33,10 @@ immutable(string[]) KEYWORDS = [
 	"wchar", "while", "with",
 	"__FILE__", "__FILE_FULL_PATH__", "__MODULE__", "__LINE__", "__FUNCTION__", "__PRETTY_FUNCTION__",
 	"__gshared", "__traits", "__vector", "__parameters",
+
+	// not an actual keyword, but we still wanna avoid using it
+	// to avoid dscanner.confusing.builtin_property_names
+	"init",
 ];
 
 enum DSTEP_OPTS = "--comments=false"
@@ -641,6 +645,43 @@ void main(string[] args) {
 					return "GL." ~ cast(char) m[1][0].toUpper ~ m[1][1 .. $]; // GLfloat -> GL.Float
 				}
 			})(regex(r"\bGL([a-z]+)\b"))
+		);
+
+		writeln("done");
+	}
+
+	if (args.canFind("fontconfig")) {
+		std.stdio.write("Generating FontConfig bindings... ");
+		stdout.flush();
+
+		Library fc = {
+			name: "fc",
+			className: "FC",
+			prefix: "Fc",
+			files: [
+				DStep("/usr/include/fontconfig/fontconfig.h"),
+			],
+
+			posix: ["libfontconfig.so.1", "libfontconfig.so"],
+		};
+
+		write("../bindings/source/gd/bindings/fc.d", generate(fc)
+			.replaceAll(regex(r"\bFC_([A-Z_]+)\b"), "$1")
+			.replaceAll(regex(r"\bFc(False|True|DontCare|Char8|Char16|Char32|Bool)\b"), "$1")
+			.replaceAll(regex(r"	static extern \(D\) string _FC_STRINGIFY_\(T\)\(auto ref T s\) \{
+		import std\.conv : to;
+
+		return to!string\(s\);
+	\}
+
+	alias _FC_STRINGIFY = _FC_STRINGIFY_;
+	enum CACHE_VERSION = _FC_STRINGIFY\(CACHE_VERSION_NUMBER\);
+
+"), "")
+			.replaceAll(regex(r"
+
+	enum FcConfigGetRescanInverval = FcConfigGetRescanInverval_REPLACE_BY_FcConfigGetRescanInterval;
+	enum FcConfigSetRescanInverval = FcConfigSetRescanInverval_REPLACE_BY_FcConfigSetRescanInterval;"), "")
 		);
 
 		writeln("done");

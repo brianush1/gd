@@ -1,6 +1,7 @@
 module gd.resource;
 import std.typecons;
 import core.atomic;
+import weakset;
 
 private shared(size_t) resourceCount = 0;
 private shared(size_t) resourceIdCounter = 0;
@@ -83,7 +84,7 @@ debug (resourceLeaks) {
 			void dump(Resource resource, string indent) {
 				visited[resource] = true;
 				stderr.writefln!"%s%d %s"(indent, resource.resourceId, resource);
-				foreach (child; resource.m_children.byKey) {
+				foreach (child; resource.m_children) {
 					dump(child, indent ~ "    ");
 				}
 			}
@@ -123,7 +124,7 @@ debug (resourceLeaks) {
 
 abstract class Resource {
 
-	private bool[Resource] m_children;
+	private WeakSet!Resource m_children;
 	private bool[Resource] parents;
 	private size_t m_id;
 
@@ -134,6 +135,7 @@ abstract class Resource {
 	this() {
 		resourceCount.atomicOp!"+="(1);
 		m_id = resourceIdCounter.atomicOp!"+="(1);
+		m_children = new WeakSet!Resource();
 
 		debug (resourceLeaks) {
 			stackTrace = getStackTrace();
@@ -144,11 +146,18 @@ abstract class Resource {
 		}
 	}
 
+	~this() {
+		dispose();
+	}
+
 	size_t resourceId() const @property {
 		return m_id;
 	}
 
-	auto children() { return m_children.byKey; }
+	Resource[] children() {
+		import std.array : array;
+		return m_children.array;
+	}
 
 	/++ adds a dependent child to this resource +/
 	private Resource addChild(Resource child) {
@@ -156,7 +165,7 @@ abstract class Resource {
 			return null;
 		}
 
-		m_children[child] = true;
+		m_children.add(child);
 		child.parents[this] = true;
 		return child;
 	}
@@ -174,8 +183,10 @@ abstract class Resource {
 		if (!m_disposed) {
 			m_disposed = true;
 
-			foreach (child; children.array) {
-				child.dispose();
+			foreach (child; children) {
+				if (!child.m_disposed) {
+					child.dispose();
+				}
 			}
 
 			try {
@@ -188,8 +199,20 @@ abstract class Resource {
 					resourceSet.remove(this);
 				}
 
-				foreach (parent; parents.byKey.array) {
-					parent.m_children.remove(this);
+				import core.stdc.stdlib : malloc, free;
+
+				Resource* parentsCopy = cast(Resource*) malloc(parents.length * Resource.sizeof);
+				scope (exit)
+					free(parentsCopy);
+
+				size_t index = 0;
+				foreach (parent; parents.byKey) {
+					parentsCopy[index] = parent;
+					index += 1;
+				}
+
+				foreach (i; 0 .. parents.length) {
+					parentsCopy[i].m_children.remove(this);
 				}
 			}
 		}

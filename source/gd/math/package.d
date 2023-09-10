@@ -1,5 +1,7 @@
 module gd.math;
-public import gd.math.vector;
-public import gd.math.matrix;
-public import gd.math.dimension;
-public import gd.math.rectangle;
+public import gd.math.vec;
+public import gd.math.mat;
+public import gd.math.frame;
+public import gd.math.dim;
+public import gd.math.rect;
+public import gd.math.util;

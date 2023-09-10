@@ -46,9 +46,7 @@ Thread guiThread() @property { // @suppress(dscanner.confusing.function_attribut
 }
 
 Application application() @property { // @suppress(dscanner.confusing.function_attributes)
-	import std.exception : enforce;
-
-	enforce(Thread.getThis is guiThread, "application can only be accessed in GUI thread");
+	assert(Thread.getThis is guiThread, "application can only be accessed in GUI thread");
 	return m_application;
 }
 
@@ -74,7 +72,7 @@ version (unittest) {} else {
 	private {
 		extern (C) int _Dmain(char[][]);
 
-		extern (C) int hijack(char[][] args) {
+		extern (C) int gdEventLoopWrapper(char[][] args) {
 			int exitCode = _Dmain(args);
 
 			if (exitCode == 0) {
@@ -92,7 +90,7 @@ version (unittest) {} else {
 		void** s = &p;
 		while (*s != &_Dmain)
 			s += 1;
-		*s = &hijack;
+		*s = &gdEventLoopWrapper;
 	}
 }
 

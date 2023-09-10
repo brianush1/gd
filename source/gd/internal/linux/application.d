@@ -24,6 +24,10 @@ class LinuxApplication : Application {
 		m_epollFd = epoll_create1(0);
 	}
 
+	protected override void disposeImpl() {
+		close(epollFd);
+	}
+
 	private void addToPoll(int fd, int events = EPOLLIN) {
 		epoll_event ev;
 		ev.data.fd = fd;
@@ -59,10 +63,6 @@ class LinuxApplication : Application {
 		return m_timer;
 	}
 
-	protected override void disposeImpl() {
-		close(epollFd);
-	}
-
 	override bool isActive() {
 		if (m_display && m_display.isActive) return true;
 		if (m_timer && m_timer.isActive) return true;
@@ -75,7 +75,11 @@ class LinuxApplication : Application {
 	}
 
 	override void waitForEvents() {
-		if (m_display) X11.flush(m_display.native);
+		if (m_display) {
+			X11.flush(m_display.native);
+			if (m_display.invalidationQueue.length != 0)
+				return;
+		}
 
 		epoll_event[] events = new epoll_event[1];
 		epoll_wait(epollFd, events.ptr, cast(int) events.length, -1);

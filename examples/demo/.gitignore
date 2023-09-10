@@ -1,7 +1,9 @@
 .dub
+.vscode
 docs.json
 __dummy.html
 docs/
+skeleton.html
 /demo
 demo.so
 demo.dylib
@@ -11,6 +13,7 @@ libdemo.a
 demo.lib
 demo-test-*
 *.exe
+*.pdb
 *.o
 *.obj
 *.lst

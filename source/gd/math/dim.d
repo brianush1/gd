@@ -1,5 +1,5 @@
-module gd.math.dimension;
-import gd.math.vector;
+module gd.math.dim;
+import gd.math.vec;
 
 struct Dim {
 	double scale = 0;
@@ -60,14 +60,23 @@ struct Dim2 {
 		this.y = y;
 	}
 
-	this(double xOffset, double yOffset = 0) {
+	this(double xOffset, double yOffset) {
 		x = Dim(xOffset);
 		y = Dim(yOffset);
+	}
+
+	this(double allOffset) {
+		x = Dim(allOffset);
+		y = Dim(allOffset);
 	}
 
 	this(double xScale, double xOffset, double yScale, double yOffset) {
 		x = Dim(xScale, xOffset);
 		y = Dim(yScale, yOffset);
+	}
+
+	Vec2 compute(Vec2 scaleFactor) const {
+		return Vec2(x.compute(scaleFactor.x), y.compute(scaleFactor.y));
 	}
 
 	Dim opBinary(string op)(const(Dim) rhs) const if (op == "+" || op == "-") {

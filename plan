@@ -1,0 +1,25 @@
+Window {
+	background = Color.fromHex("#EFF0F1");
+}
+
+Button {
+	font = Font(FontType.Sans);
+	background = Color.fromHex("#EFF0F1");
+	border = Border(Color.fromHex("#B2B3B4"), 1);
+	roundness = 3;
+	shadow ~= Shadow(
+		color: Color.fromHex("#0002"),
+		offset: Vec2(0, 1),
+		blur: 0,
+	);
+}
+
+Button:active {
+	background = Color.fromHex("#B4DAEE");
+	border = Border(Color.fromHex("#3DAEE9"), 1);
+	shadow = [];
+}
+
+Button:hover {
+	border = Border(Color.fromHex("#3DAEE9"), 1);
+}

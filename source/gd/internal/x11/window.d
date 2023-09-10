@@ -6,7 +6,7 @@ import gd.internal.gl.opengl;
 import gd.internal.window;
 import gd.internal.gpu;
 import gd.resource;
-import gd.graphics;
+import gd.graphics.color;
 import gd.keycode;
 import gd.cursor;
 import gd.math;
@@ -46,22 +46,20 @@ class X11MousePointer : Pointer {
 		addDependency(window);
 
 		updateFlags();
-		device.onValuatorsChange.connect({ updateFlags(); });
+		device.onUpdate.connect({ updateFlags(); });
 	}
 
 	protected override void disposeImpl() {}
-
-	override PointerType type() const @property {
-		return PointerType.Mouse;
-	}
 
 	private void updateFlags() {
 		PointerFlags flags = PointerFlags.CanSetPosition
 			| PointerFlags.HasScreenPosition;
 
 		if (device.mode == DeviceMode.Relative) {
-			flags |= PointerFlags.RelativeMotion;
+			flags |= PointerFlags.RelativeMotion | PointerFlags.CanConstrain;
 		}
+
+		// TODO: HasTilt
 
 		if (Valuator pressureValuator = device.getValuatorByRole(ValuatorRole.Pressure)) {
 			flags |= PointerFlags.HasPressure;
@@ -232,7 +230,11 @@ class X11MousePointer : Pointer {
 		int x = cast(int) queriedPosition.screen.x;
 		int y = cast(int) queriedPosition.screen.y;
 
-		// UGLY HACK: maintain subpixel precision, but also update the pointer position if we need to
+		// UGLY HACK: maintain subpixel precision.
+		// by locking the pointer, we automatically warp it to an integer coordinate
+		// so we remember its old position in order to maintain subpixel precision
+		// ...but sometimes, the pointer can actually move a little bit before we lock it
+		// so, if that happened, we need to update the position
 		if (IVec2(queriedPosition.window) != IVec2(currentPosition)) {
 			lockedPosition = queriedPosition.window;
 		}
@@ -298,10 +300,8 @@ private:
 	X11.Window m_native;
 	public inout(X11.Window) native() inout @property { return m_native; }
 
-	GLX.GLXContext glxContext;
 	GLX.GLXFBConfig fbconfig;
 	X11.GC gcontext;
-	IVec2 bufferSize;
 	X11.Pixmap backBuffer;
 	GLX.GLXPixmap glxBackBuffer;
 	bool oversizeBuffer;
@@ -425,25 +425,15 @@ private:
 			X11.None,
 		];
 
-		glxContext = GLX.createContextAttribsARB(
-			display.native,
-			fbconfig,
-			display.headlessGlxContext,
-			X11.True, // request direct rendering
-			contextAttribs.ptr,
-		);
-
-		enforce!X11Exception(glxContext != null, "could not create OpenGL context");
-
 		(cast(GLContext) display.gpuContext).registerWindow(this, {
 			// TODO: don't call this if it's already the current context
-			GLX.makeCurrent(display.native, glxBackBuffer, glxContext);
+			GLX.makeCurrent(this.display.native, glxBackBuffer, display.globalGlxContext);
 		});
 
 		gcontext = X11.createGC(display.native, m_native, 0, null);
 		X11.setGraphicsExposures(display.native, gcontext, X11.False);
 
-		bufferSize = IVec2(640, 480);
+		m_bufferSize = IVec2(640, 480);
 		backBuffer = X11.createPixmap(display.native, m_native, bufferSize.x, bufferSize.y, 24);
 		glxBackBuffer = GLX.createPixmap(display.native, fbconfig, backBuffer, null);
 
@@ -451,12 +441,6 @@ private:
 		X11.sync(display.native, X11.False);
 
 		// TODO: vsync
-		/+makeGLContextCurrent(); // turn vsync off (I don't know if it's on tbh!)
-		GLX.swapIntervalEXT(display.native, native, 0);
-		auto glXSwapIntervalMESA = cast(int function(int)) GLX.getProcAddress(cast(const(ubyte)*) "glXSwapIntervalMESA".ptr);
-		if (glXSwapIntervalMESA !is null) {
-			glXSwapIntervalMESA(0);
-		}+/
 
 		title = options.title;
 		m_size = options.size;
@@ -513,9 +497,6 @@ private:
 	}
 
 	protected override void disposeImpl() {
-		if (glxContext != null) {
-			// TODO: figure out how to free gl context
-		}
 		if (createdXWindow) X11.destroyWindow(display.native, native);
 		if (xsyncCounter != X11.None) XSync.destroyCounter(display.native, xsyncCounter);
 	}
@@ -593,8 +574,6 @@ private:
 	long currentConfigureTimer = -1;
 
 	package void processEvent(X11.XEvent* ev) {
-		import std.stdio : writefln;
-
 		string name;
 		switch (ev.type) {
 			case X11.KeyPress: name = "KeyPress"; break;
@@ -657,12 +636,15 @@ private:
 			import std.algorithm : min, max;
 			import std.datetime : Duration, msecs;
 
+			// TODO: do we have to redraw the window if all we did was move it?
+			// not sure how not redrawing it would play with WMs without compositors
+
 			bool resizeBackBuffer(IVec2 newSize) {
 				if (bufferSize == newSize) {
 					return false;
 				}
 
-				bufferSize = newSize;
+				m_bufferSize = newSize;
 
 				GLX.destroyPixmap(display.native, glxBackBuffer);
 				X11.freePixmap(display.native, backBuffer);
@@ -682,6 +664,7 @@ private:
 			X11.XWindowAttributes attrs;
 			X11.getWindowAttributes(display.native, native, &attrs);
 			m_size = IVec2(max(attrs.width, 1), max(attrs.height, 1));
+			onSizeChange.emit(m_size);
 
 			bool bufferResized;
 
@@ -878,19 +861,47 @@ private:
 		}
 	}
 
+	package void processXI2Event(XI2.XIRawEvent* ev) {
+		X11MousePointer pointer = getPointerByDeviceId(ev.deviceid);
+
+		if (pointer is null)
+			return;
+
+		X11Device master = pointer.device;
+
+		Vec2 motion;
+		foreach (i; 0 .. ev.valuators.mask_len * 8) {
+			if (XI2.maskIsSet(ev.valuators.mask, i)) {
+				switch (master.valuators[i].role) {
+				case ValuatorRole.RelX:
+					motion.x = ev.raw_values[i];
+					break;
+				case ValuatorRole.RelY:
+					motion.y = ev.raw_values[i];
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		if (motion != Vec2(0)) {
+			pointer.onMotion.emit(motion);
+		}
+	}
+
 	package void processXI2Event(XI2.XIDeviceEvent* devev) {
 		import std.stdio : writefln;
 
 		switch (devev.evtype) {
 		case XI2.XI_TouchBegin:
-			writefln!"Touch Begin   %08X %f %f"(devev.detail, devev.event_x, devev.event_y);
+			onTouchStart.emit(cast(uint) devev.detail, Vec2(devev.event_x, devev.event_y));
 			break;
 		case XI2.XI_TouchUpdate:
-			writefln!"Touch Update  %08X %f %f    dev = %d, src = %d"(devev.detail, devev.event_x, devev.event_y,
-				devev.deviceid, devev.sourceid);
+			onTouchMove.emit(cast(uint) devev.detail, Vec2(devev.event_x, devev.event_y));
 			break;
 		case XI2.XI_TouchEnd:
-			writefln!"Touch End     %08X %f %f"(devev.detail, devev.event_x, devev.event_y);
+			onTouchEnd.emit(cast(uint) devev.detail);
 			break;
 		case XI2.XI_ButtonPress:
 		case XI2.XI_ButtonRelease:
@@ -960,6 +971,27 @@ public:
 		return result;
 	}
 
+	override void setIcon(IVec2 size, const(uint)[] data) {
+		assert(data.length == size.x * cast(size_t) size.y);
+		assert(size.x > 0 && size.y > 0);
+		uint[] transformed = new uint[data.length + 2];
+		transformed[0] = size.x;
+		transformed[1] = size.y;
+		foreach (i; 0 .. data.length) {
+			uint color = data[i]; // stored as RGBA
+			transformed[i + 2] = // swap to BGRA
+				color & 0xFF_00_FF_00u
+				| color >> 16 & 0xFF
+				| (color & 0xFF) << 16
+				;
+		}
+		changeProperty(
+			display.atom!("_NET_WM_ICON"),
+			display.atom!("CARDINAL", No.create),
+			transformed,
+		);
+	}
+
 	private PaintHandler m_paintHandler;
 	override void setPaintHandler(PaintHandler handler) {
 		m_paintHandler = handler;
@@ -989,8 +1021,6 @@ public:
 		(cast(GLContext) display.gpuContext).switchToSurface(surface);
 		GL.drawBuffer(GL.FRONT_LEFT);
 
-		// FIXME: TODO: viewport
-		GL.viewport(0, bufferSize.y - size.y, size.x, size.y);
 		IRect paintedRegion = m_paintHandler(region, bufferSize, surface);
 		IRect updateRegion = paintedRegion.clipArea(IRect(IVec2(0, 0), size));
 
@@ -1041,6 +1071,9 @@ public:
 		X11.flush(display.native);
 	}
 
+	private IVec2 m_bufferSize;
+	override IVec2 bufferSize() const @property { return m_bufferSize; }
+
 	private IVec2 m_size;
 	override IVec2 size() const @property { return m_size; }
 	override void size(IVec2 value) @property {
@@ -1048,6 +1081,7 @@ public:
 
 		value = IVec2(max(value.x, 1), max(value.y, 1));
 		m_size = value;
+		onSizeChange.emit(m_size);
 
 		X11.XWindowAttributes attrs;
 		X11.getWindowAttributes(display.native, native, &attrs);
@@ -1158,8 +1192,8 @@ public:
 		value.a = 1;
 		value = value.clamp;
 
-		if (m_backgroundColor.asUint != value.asUint) {
-			X11.setWindowBackground(display.native, native, value.asUint);
+		if (m_backgroundColor.asUint!"bgra" != value.asUint!"bgra") {
+			X11.setWindowBackground(display.native, native, value.asUint!"bgra");
 		}
 
 		m_backgroundColor = value;

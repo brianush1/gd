@@ -7,8 +7,8 @@ import gd.internal.window;
 import gd.internal.display;
 import gd.internal.application;
 import gd.internal.gpu;
-import gd.graphics;
-import gd.math.rectangle;
+import gd.graphics.color;
+import gd.math.rect;
 import gd.resource;
 import std.typecons;
 import std.exception;
@@ -29,9 +29,10 @@ private:
 
 	package {
 		X11Window[X11.Window] windowMap;
-		IRect[X11Window] invalidationQueue;
 		X11DeviceManager deviceManager;
 	}
+
+	package(gd.internal) IRect[X11Window] invalidationQueue;
 
 	package(gd.internal) this(Application application) {
 		scope (failure) dispose();
@@ -51,10 +52,11 @@ private:
 	}
 
 	protected override void disposeImpl() {
+		// TODO: figure out how to free gl context
 		if (native) X11.closeDisplay(native);
 	}
 
-	package GLX.GLXContext headlessGlxContext;
+	package GLX.GLXContext globalGlxContext;
 	GLX.GLXWindow headlessGlxWindow;
 	X11.Window headlessWindow;
 
@@ -105,7 +107,7 @@ private:
 			X11.None,
 		];
 
-		headlessGlxContext = GLX.createContextAttribsARB(
+		globalGlxContext = GLX.createContextAttribsARB(
 			native,
 			fbconfig,
 			null,
@@ -113,7 +115,7 @@ private:
 			contextAttribs.ptr,
 		);
 
-		enforce!X11Exception(headlessGlxContext != null, "could not create OpenGL context");
+		enforce!X11Exception(globalGlxContext != null, "could not create OpenGL context");
 
 		X11.sync(native, X11.False);
 
@@ -130,7 +132,7 @@ private:
 		m_gpuContext.addDependency(this);
 		m_gpuContext.registerWindow(null, {
 			// TODO: don't call this if it's already the current context
-			GLX.makeCurrent(native, headlessGlxWindow, headlessGlxContext);
+			GLX.makeCurrent(native, headlessGlxWindow, globalGlxContext);
 		});
 	}
 

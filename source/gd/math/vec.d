@@ -1,5 +1,5 @@
-module gd.math.vector;
-import gd.math.dimension;
+module gd.math.vec;
+import gd.math.dim;
 import std.traits;
 import std.math;
 
@@ -18,11 +18,16 @@ alias IVec4 = TVec4!int;
 alias FVec4 = TVec4!float;
 alias RVec4 = TVec4!real;
 
+// TODO: rgba swizzling
+
 struct TVec2(T) {
 	T[2] components = [0, 0];
 
 	ref inout(T) x() inout @property { return components[0]; }
 	ref inout(T) y() inout @property { return components[1]; }
+
+	ref inout(T) r() inout @property { return components[0]; }
+	ref inout(T) g() inout @property { return components[1]; }
 
 	ref inout(T) opIndex(size_t index) inout {
 		return components[index];
@@ -33,7 +38,12 @@ struct TVec2(T) {
 		y = cast(T) base.y;
 	}
 
-	this(T x, T y = 0) {
+	this(T v) {
+		this.x = v;
+		this.y = v;
+	}
+
+	this(T x, T y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -199,14 +209,12 @@ struct TVec3(T) {
 	ref inout(T) y() inout @property { return components[1]; }
 	ref inout(T) z() inout @property { return components[2]; }
 
+	ref inout(T) r() inout @property { return components[0]; }
+	ref inout(T) g() inout @property { return components[1]; }
+	ref inout(T) b() inout @property { return components[2]; }
+
 	ref inout(T) opIndex(size_t index) inout {
 		return components[index];
-	}
-
-	this(T x, T y = 0, T z = 0) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
 	}
 
 	this(V)(TVec3!V base) {
@@ -215,7 +223,19 @@ struct TVec3(T) {
 		z = cast(T) base.z;
 	}
 
-	this(V)(TVec2!V v, T z = 0) {
+	this(T v) {
+		this.x = v;
+		this.y = v;
+		this.z = v;
+	}
+
+	this(T x, T y, T z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+	}
+
+	this(V)(TVec2!V v, T z) {
 		x = cast(T) v.x;
 		y = cast(T) v.y;
 		this.z = z;
@@ -392,15 +412,13 @@ struct TVec4(T) {
 	ref inout(T) z() inout @property { return components[2]; }
 	ref inout(T) w() inout @property { return components[3]; }
 
+	ref inout(T) r() inout @property { return components[0]; }
+	ref inout(T) g() inout @property { return components[1]; }
+	ref inout(T) b() inout @property { return components[2]; }
+	ref inout(T) a() inout @property { return components[3]; }
+
 	ref inout(T) opIndex(size_t index) inout {
 		return components[index];
-	}
-
-	this(T x, T y = 0, T z = 0, T w = 0) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.w = w;
 	}
 
 	this(V)(TVec4!V base) {
@@ -410,7 +428,21 @@ struct TVec4(T) {
 		w = cast(T) base.w;
 	}
 
-	this(V)(TVec3!V v, T w = 0) {
+	this(T v) {
+		this.x = v;
+		this.y = v;
+		this.z = v;
+		this.w = v;
+	}
+
+	this(T x, T y, T z, T w) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
+	}
+
+	this(V)(TVec3!V v, T w) {
 		x = cast(T) v.x;
 		y = cast(T) v.y;
 		z = cast(T) v.z;
@@ -431,14 +463,14 @@ struct TVec4(T) {
 		w = cast(T) v2.y;
 	}
 
-	this(V)(TVec2!V v, T z = 0, T w = 0) {
+	this(V)(TVec2!V v, T z, T w) {
 		x = cast(T) v.x;
 		y = cast(T) v.y;
 		this.z = z;
 		this.w = w;
 	}
 
-	this(V)(T x, TVec2!V v, T w = 0) {
+	this(V)(T x, TVec2!V v, T w) {
 		this.x = x;
 		y = cast(T) v.x;
 		z = cast(T) v.y;

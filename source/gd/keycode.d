@@ -198,17 +198,23 @@ enum KeyBindings {
 	+/
 	Help,
 
-	/++ Quit the application.
+	/++ Zoom in.
 	- Common key binding: Ctrl+Plus
-	- Qt equivalent: QtKeySequence::Quit
+	- Qt equivalent: QtKeySequence::ZoomIn
 	+/
 	ZoomIn,
 
-	/++ Show help for using the application.
+	/++ Zoom out.
 	- Common key binding: Ctrl+Minus
-	- Qt equivalent: QtKeySequence::HelpContents
+	- Qt equivalent: QtKeySequence::ZoomOut
 	+/
 	ZoomOut,
+
+	/++ Enter full screen mode.
+	- Common key binding: F11
+	- Qt equivalent: QtKeySequence::FullScreen
+	+/
+	FullScreen,
 
 }
 
