@@ -190,6 +190,12 @@ struct Font {
 	}
 
 	FontFace[] faces() {
+		static FontFace[][Font] fontCache;
+
+		if (this in fontCache) {
+			return fontCache[this];
+		}
+
 		string[] transformedFamilies = families;
 		final switch (type) {
 		case FontType.Sans:
@@ -231,6 +237,7 @@ struct Font {
 			}
 		}
 
+		fontCache[this] = finalFaces;
 		return finalFaces;
 	}
 }

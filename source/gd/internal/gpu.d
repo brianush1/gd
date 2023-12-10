@@ -203,7 +203,7 @@ abstract class GPUContext : Resource {
 		import std.traits : moduleName;
 
 		template getSource(string name) {
-			static if (is(typeof(__traits(glsl__source, T, "VertexSource")))) {
+			static if (is(typeof(__traits(glsl__source, Object, "")))) {
 				enum getSource = __traits(glsl__source, T, name);
 			}
 			else {
@@ -230,7 +230,7 @@ abstract class GPUContext : Resource {
 		// TODO: avoid setting uniforms if they haven't changed
 
 		template rename(string name) {
-			static if (is(typeof(__traits(glsl__source, T, "Vertex")))) {
+			static if (is(typeof(__traits(glsl__source, Object, "")))) {
 				enum rename = __traits(glsl__rename, T, name);
 			}
 			else {
@@ -240,7 +240,7 @@ abstract class GPUContext : Resource {
 		}
 
 		template global(string name) {
-			static if (is(typeof(__traits(glsl__source, T, "Vertex")))) {
+			static if (is(typeof(__traits(glsl__source, Object, "")))) {
 				enum global = __traits(glsl__global, name);
 			}
 			else {

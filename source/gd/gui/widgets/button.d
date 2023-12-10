@@ -3,4 +3,8 @@ import gd.gui.widgets;
 
 class Button : Container {
 
+	this() {
+		interactive = true;
+	}
+
 }

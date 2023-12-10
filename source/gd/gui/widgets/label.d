@@ -1,9 +1,9 @@
-module gd.gui.widgets.text;
+module gd.gui.widgets.label;
 import gd.gui.widgets;
 import gd.graphics;
 import gd.math;
 
-class Text : Widget {
+class Label : Widget {
 
 	Color color = Colors.Black;
 	string text = "Text";

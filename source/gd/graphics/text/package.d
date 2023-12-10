@@ -1,11 +1,6 @@
 module gd.graphics.text;
 public import gd.graphics.text.font;
 
-enum TextAxis {
-	Horizontal,
-	Vertical,
-}
-
 enum TextDirection {
 	LTR,
 	RTL,

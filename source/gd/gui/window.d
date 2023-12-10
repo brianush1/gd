@@ -1,8 +1,6 @@
 module gd.gui.window;
 import gd.gui.widgets;
 import gd.gui.event;
-import gd.gui.style;
-import gd.gui.themes;
 import gd.internal.gpu;
 import gd.internal.window : SysWindow = Window, WindowInitOptions, Pointer;
 public import gd.internal.window : WindowState;
@@ -56,12 +54,8 @@ class Window : Container {
 	mixin(setter!("windowSize", "private"));
 	inout(IVec2) windowSize() inout @property { return m_windowSize; }
 
-	StyleSheet[] styleSheets;
-
 	this(Flag!"startVisible" startVisible = Yes.startVisible) {
 		assert(Thread.getThis is guiThread, "window cannot be created in thread other than main thread");
-
-		styleSheets ~= defaultTheme;
 
 		visible = startVisible;
 		background = Colors.White;
@@ -140,12 +134,13 @@ class Window : Container {
 
 	private void pointerHandler(Pointer pointer) {
 		pointer.onButtonPress.connect((MouseButton button) {
-			foreach (child; getChildren) {
+			// TODO: FIXME: find the actual element that was clicked
+			foreach (child; this) {
 				child.onMouseDown.emit(new Event);
 			}
 		});
 		pointer.onButtonRelease.connect((MouseButton button) {
-			foreach (child; getChildren) {
+			foreach (child; this) {
 				child.onMouseUp.emit(new Event);
 			}
 		});

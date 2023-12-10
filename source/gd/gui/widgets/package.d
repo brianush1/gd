@@ -1,4 +1,6 @@
 module gd.gui.widgets;
 public import gd.gui.widgets.base;
 public import gd.gui.widgets.button;
-public import gd.gui.widgets.text;
+public import gd.gui.widgets.container;
+public import gd.gui.widgets.glarea;
+public import gd.gui.widgets.label;

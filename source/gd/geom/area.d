@@ -51,6 +51,10 @@ struct TArea(T) {
 	// TODO: replace these cubics with arcs
 	static TArea!T roundedRect(TRect!T rect, T radius) {
 		import std.math : tan, PI;
+
+		if (radius == 0)
+			return TArea!T.rect(rect);
+
 		double MAGIC = tan(PI / 8) * 4 / 3;
 		TPath!T path;
 		path.moveTo(rect.position + TVec2!T(radius, 0));
