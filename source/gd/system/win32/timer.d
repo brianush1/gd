@@ -1,6 +1,6 @@
-module gd.internal.win32.timer;
-import gd.internal.application;
-import gd.internal.timer;
+module gd.system.win32.timer;
+import gd.system.application;
+import gd.system.timer;
 import std.datetime;
 
 version (gd_Win32):
@@ -10,7 +10,7 @@ import core.sys.windows.winuser;
 
 class Win32Timer : Timer {
 
-	package(gd.internal) this(Application application) {
+	package(gd.system) this(Application application) {
 		scope (failure) dispose();
 
 		addDependency(application);

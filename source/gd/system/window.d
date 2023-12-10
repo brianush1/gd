@@ -1,11 +1,11 @@
-module gd.internal.window;
+module gd.system.window;
 import gd.resource;
 import gd.keycode;
 import gd.signal;
 import gd.graphics.color;
 import gd.cursor;
 import gd.math;
-import gd.internal.gpu;
+import gd.system.gpu;
 
 struct WindowInitOptions {
 	int depthSize = 16;

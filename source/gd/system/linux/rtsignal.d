@@ -1,7 +1,7 @@
-module gd.internal.linux.rtsignal;
+module gd.system.linux.rtsignal;
 
 version (gd_Linux):
-package(gd.internal.linux):
+package(gd.system.linux):
 
 import core.sys.linux.sys.signalfd;
 import core.sys.posix.signal;

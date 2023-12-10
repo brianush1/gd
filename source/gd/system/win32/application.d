@@ -1,15 +1,15 @@
-module gd.internal.win32.application;
-import gd.internal.win32.timer;
-import gd.internal.application;
-import gd.internal.display;
-import gd.internal.timer;
+module gd.system.win32.application;
+import gd.system.win32.timer;
+import gd.system.application;
+import gd.system.display;
+import gd.system.timer;
 import gd.resource;
 
 version (gd_Win32):
 
 class Win32Application : Application {
 
-	package(gd.internal) this() {
+	package(gd.system) this() {
 		scope (failure) dispose();
 	}
 

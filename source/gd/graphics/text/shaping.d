@@ -33,8 +33,9 @@ ShapedGlyph[] shapeText(TextDrawInfo info) {
 	double ascent = info.fontFaces[0].metrics.ascent * size;
 	double descent = -info.fontFaces[0].metrics.descent * size;
 	Vec2 transform = info.layoutRectangle.position
-		+ info.layoutRectangle.size / 2 + Vec2(
-			-currX / 2,
+		+ Vec2(0, info.layoutRectangle.size.y) / 2 + Vec2(
+			// -currX / 2,
+			0,
 			round(-descent + (ascent + descent) / 2),
 		);
 	foreach (ref glyph; result)

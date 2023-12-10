@@ -1,12 +1,12 @@
-module gd.internal.x11.display;
-import gd.internal.x11.device;
-import gd.internal.x11.window;
-import gd.internal.x11.exception;
-import gd.internal.gl.opengl;
-import gd.internal.window;
-import gd.internal.display;
-import gd.internal.application;
-import gd.internal.gpu;
+module gd.system.x11.display;
+import gd.system.x11.device;
+import gd.system.x11.window;
+import gd.system.x11.exception;
+import gd.system.gl.opengl;
+import gd.system.window;
+import gd.system.display;
+import gd.system.application;
+import gd.system.gpu;
 import gd.graphics.color;
 import gd.math.rect;
 import gd.resource;
@@ -32,9 +32,9 @@ private:
 		X11DeviceManager deviceManager;
 	}
 
-	package(gd.internal) IRect[X11Window] invalidationQueue;
+	package(gd.system) IRect[X11Window] invalidationQueue;
 
-	package(gd.internal) this(Application application) {
+	package(gd.system) this(Application application) {
 		scope (failure) dispose();
 
 		addDependency(application);

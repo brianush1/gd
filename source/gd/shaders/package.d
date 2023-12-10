@@ -1,6 +1,6 @@
 module gd.shaders;
 import gd.math;
-import gd.internal.gpu;
+import gd.system.gpu;
 
 private enum __glsl { // @suppress(dscanner.style.phobos_naming_convention)
 	varying = 0x200,

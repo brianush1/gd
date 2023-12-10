@@ -1,4 +1,4 @@
-module gd.internal.gl.exception;
+module gd.system.gl.exception;
 import gd.bindings.gl;
 public import std.exception : enforce;
 

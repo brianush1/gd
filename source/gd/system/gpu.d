@@ -1,5 +1,5 @@
-module gd.internal.gpu;
-import gd.internal.window;
+module gd.system.gpu;
+import gd.system.window;
 import gd.shaders;
 import gd.graphics.color;
 import gd.resource;

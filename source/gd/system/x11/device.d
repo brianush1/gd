@@ -1,6 +1,6 @@
-module gd.internal.x11.device;
-import gd.internal.x11.display;
-import gd.internal.x11.window;
+module gd.system.x11.device;
+import gd.system.x11.display;
+import gd.system.x11.window;
 import gd.resource;
 import gd.signal;
 import gd.math;

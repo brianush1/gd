@@ -1,7 +1,7 @@
-module gd.internal.gl.opengl;
-import gd.internal.gl.exception;
-import gd.internal.gpu;
-import gd.internal.window;
+module gd.system.gl.opengl;
+import gd.system.gl.exception;
+import gd.system.gpu;
+import gd.system.window;
 import gd.bindings.gl;
 import gd.math;
 import std.typecons;
@@ -485,7 +485,7 @@ class GLContext : GPUContext {
 
 	protected override void disposeImpl() {}
 
-	package(gd.internal) void registerWindow(Window window, void delegate() makeCurrent) {
+	package(gd.system) void registerWindow(Window window, void delegate() makeCurrent) {
 		data[window] = new ContextData();
 		data[window].makeCurrent = makeCurrent;
 	}
@@ -552,7 +552,7 @@ class GLContext : GPUContext {
 	}
 
 	// this function may not use the GC
-	package(gd.internal) void switchToSurface(GPUSurface surface, Flag!"force" force = No.force) {
+	package(gd.system) void switchToSurface(GPUSurface surface, Flag!"force" force = No.force) {
 		bool changedWindow = false;
 
 		if (auto img = cast(GLImage) surface) {

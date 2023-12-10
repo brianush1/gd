@@ -1,4 +1,4 @@
-module gd.internal.timer;
+module gd.system.timer;
 import gd.resource;
 import std.datetime;
 

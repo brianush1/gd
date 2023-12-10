@@ -1,7 +1,7 @@
-module gd.internal.linux.timer;
-import gd.internal.linux.rtsignal;
-import gd.internal.application;
-import gd.internal.timer;
+module gd.system.linux.timer;
+import gd.system.linux.rtsignal;
+import gd.system.application;
+import gd.system.timer;
 import std.datetime;
 
 version (gd_Linux):
@@ -20,7 +20,7 @@ class LinuxTimer : Timer {
 
 	int timerSignal() const @property { return m_timerSignal; }
 
-	package(gd.internal) this(Application application) {
+	package(gd.system) this(Application application) {
 		scope (failure) dispose();
 
 		addDependency(application);

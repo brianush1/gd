@@ -1,4 +1,4 @@
-module gd.internal.x11.exception;
+module gd.system.x11.exception;
 
 version (gd_X11Impl):
 

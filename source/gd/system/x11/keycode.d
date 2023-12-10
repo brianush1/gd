@@ -1,4 +1,4 @@
-module gd.internal.x11.keycode;
+module gd.system.x11.keycode;
 
 version (gd_X11Impl):
 

@@ -3,8 +3,8 @@ import gd.graphics.image.base;
 import gd.graphics.color;
 import gd.math;
 
-import gd.internal.application;
-import gd.internal.gpu;
+import gd.system.application;
+import gd.system.gpu;
 
 enum BitmapFileFormat {
 	PNG,

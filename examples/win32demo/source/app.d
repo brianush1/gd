@@ -1,6 +1,6 @@
 import std.stdio;
 import std.datetime;
-import gd.internal.application;
+import gd.system.application;
 import gd.timer;
 
 void main() {

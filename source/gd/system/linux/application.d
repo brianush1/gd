@@ -1,8 +1,8 @@
-module gd.internal.linux.application;
-import gd.internal.linux.timer;
-import gd.internal.x11.display;
-import gd.internal.application;
-import gd.internal.display;
+module gd.system.linux.application;
+import gd.system.linux.timer;
+import gd.system.x11.display;
+import gd.system.application;
+import gd.system.display;
 import gd.resource;
 
 version (gd_Linux):
@@ -18,7 +18,7 @@ class LinuxApplication : Application {
 	private int m_epollFd;
 	int epollFd() const @property { return m_epollFd; }
 
-	package(gd.internal) this() {
+	package(gd.system) this() {
 		scope (failure) dispose();
 
 		m_epollFd = epoll_create1(0);

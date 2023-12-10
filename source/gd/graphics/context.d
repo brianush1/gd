@@ -7,8 +7,8 @@ import gd.geom.path;
 import gd.shaders;
 import gd.math;
 
-import gd.internal.application;
-import gd.internal.gpu;
+import gd.system.application;
+import gd.system.gpu;
 
 enum Antialias {
 	Grayscale,

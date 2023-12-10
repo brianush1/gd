@@ -1,6 +1,6 @@
-module gd.internal.application;
-import gd.internal.display;
-import gd.internal.timer;
+module gd.system.application;
+import gd.system.display;
+import gd.system.timer;
 import gd.resource;
 import core.thread;
 
@@ -54,12 +54,12 @@ shared static this() {
 	m_guiThread = Thread.getThis;
 
 	version (gd_Linux) {
-		import gd.internal.linux.application : LinuxApplication;
+		import gd.system.linux.application : LinuxApplication;
 
 		m_application = new LinuxApplication();
 	}
 	else version (gd_Win32) {
-		import gd.internal.win32.application : Win32Application;
+		import gd.system.win32.application : Win32Application;
 
 		m_application = new Win32Application();
 	}

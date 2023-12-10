@@ -1,10 +1,10 @@
 module gd.gui.window;
 import gd.gui.widgets;
 import gd.gui.event;
-import gd.internal.gpu;
-import gd.internal.window : SysWindow = Window, WindowInitOptions, Pointer;
-public import gd.internal.window : WindowState;
-import gd.internal.application;
+import gd.system.gpu;
+import gd.system.window : SysWindow = Window, WindowInitOptions, Pointer;
+public import gd.system.window : WindowState;
+import gd.system.application;
 import gd.signal;
 import gd.keycode;
 import gd.graphics;

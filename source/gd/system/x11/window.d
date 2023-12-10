@@ -1,10 +1,10 @@
-module gd.internal.x11.window;
-import gd.internal.x11.display;
-import gd.internal.x11.device;
-import gd.internal.x11.exception;
-import gd.internal.gl.opengl;
-import gd.internal.window;
-import gd.internal.gpu;
+module gd.system.x11.window;
+import gd.system.x11.display;
+import gd.system.x11.device;
+import gd.system.x11.exception;
+import gd.system.gl.opengl;
+import gd.system.window;
+import gd.system.gpu;
 import gd.resource;
 import gd.graphics.color;
 import gd.keycode;
@@ -632,7 +632,7 @@ private:
 
 			break;
 		case X11.ConfigureNotify:
-			import gd.internal.application : application;
+			import gd.system.application : application;
 			import std.algorithm : min, max;
 			import std.datetime : Duration, msecs;
 
@@ -777,7 +777,7 @@ private:
 			break;
 		case X11.KeyPress:
 		case X11.KeyRelease:
-			import gd.internal.x11.keycode : keySymToKeyCode;
+			import gd.system.x11.keycode : keySymToKeyCode;
 			import std.algorithm : countUntil;
 
 			X11.KeySym[] keys;
