@@ -2,9 +2,7 @@ module gd.system.x11.window;
 import gd.system.x11.display;
 import gd.system.x11.device;
 import gd.system.x11.exception;
-import gd.system.gl.opengl;
 import gd.system.window;
-import gd.system.gpu;
 import gd.resource;
 import gd.graphics.color;
 import gd.keycode;
@@ -301,10 +299,7 @@ private:
 	public inout(X11.Window) native() inout @property { return m_native; }
 
 	GLX.GLXFBConfig fbconfig;
-	X11.GC gcontext;
-	X11.Pixmap backBuffer;
-	GLX.GLXPixmap glxBackBuffer;
-	bool oversizeBuffer;
+	GLX.GLXContext glxContext;
 
 	X11.Cursor hiddenCursor;
 
@@ -318,8 +313,6 @@ private:
 		m_display = display;
 
 		addDependency(display);
-
-		oversizeBuffer = options.oversizeBuffer;
 
 		display.deviceManager.handleDevice((X11Device device) {
 			if (device.role == DeviceRole.Pointer) {
@@ -356,7 +349,7 @@ private:
 			GLX.ALPHA_SIZE, 8,
 			GLX.DEPTH_SIZE, options.depthSize,
 			GLX.STENCIL_SIZE, 8,
-			GLX.DOUBLEBUFFER, X11.False,
+			GLX.DOUBLEBUFFER, X11.True,
 			X11.None,
 		];
 
@@ -369,7 +362,7 @@ private:
 			int sampleBuffers, samples;
 			GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLE_BUFFERS, &sampleBuffers);
 			GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLES, &samples);
-			if (i == 0 || (sampleBuffers > 0 && samples == 1)) {
+			if (i == 0 || (sampleBuffers > 0 && samples == 1)) { // TODO: samples > chosenSamples ?
 				fbconfig = candidate;
 				chosenSamples = samples;
 			}
@@ -383,31 +376,22 @@ private:
 		enforce!X11Exception(visualInfo != null, "could not get OpenGL visual");
 		X11.Visual* visual = X11.defaultVisual(display.native, screen);
 
-		try {
-			X11.XSetWindowAttributes winAttribs;
-			winAttribs.colormap = X11.createColormap(display.native, root, visual, X11.AllocNone);
-			// winAttribs.override_redirect = isPopup; // TODO: support for popup windows
+		X11.XSetWindowAttributes winAttribs;
+		winAttribs.colormap = X11.createColormap(display.native, root, visualInfo.visual, X11.AllocNone);
+		// winAttribs.override_redirect = isPopup; // TODO: support for popup windows
 
-			createdXWindow = true; // used to make sure we don't destroy a window in disposeImpl before it's created
-			m_native = X11.createWindow(
-				display.native,
-				root, // parent
-				0, 0, options.size.x, options.size.y, // x, y, width, height
-				0, // border width
-				24, // color depth
-				X11.InputOutput,
-				visual,
-				// TODO: support for popup windows (override redirect)
-				X11.CWColormap, // | X11.CWOverrideRedirect
-				&winAttribs,
-			);
-
-			// TODO: free colormap in correct place
-			// X11.freeColormap(display.native, winAttribs.colormap);
-		}
-		finally {
-			// X11.free(visualInfo);
-		}
+		createdXWindow = true; // used to make sure we don't destroy a window in disposeImpl before it's created
+		m_native = X11.createWindow(
+			display.native,
+			root, // parent
+			0, 0, options.size.x, options.size.y, // x, y, width, height
+			0, // border width
+			visualInfo.depth, // color depth
+			X11.InputOutput,
+			visual,
+			X11.CWColormap | X11.CWOverrideRedirect,
+			&winAttribs,
+		);
 
 		X11.XColor color;
 		ubyte[1] data = [0];
@@ -425,31 +409,23 @@ private:
 			X11.None,
 		];
 
-		(cast(GLContext) display.gpuContext).registerWindow(this, {
-			// TODO: don't call this if it's already the current context
-			GLX.makeCurrent(this.display.native, glxBackBuffer, display.globalGlxContext);
-		});
-
-		gcontext = X11.createGC(display.native, m_native, 0, null);
-		X11.setGraphicsExposures(display.native, gcontext, X11.False);
-
-		m_bufferSize = IVec2(640, 480);
-		backBuffer = X11.createPixmap(display.native, m_native, bufferSize.x, bufferSize.y, 24);
-		glxBackBuffer = GLX.createPixmap(display.native, fbconfig, backBuffer, null);
+		glxContext = GLX.createContextAttribsARB(display.native, fbconfig, null, X11.True, contextAttribs.ptr);
 
 		// sync to ensure any errors generated are processed
 		X11.sync(display.native, X11.False);
 
-		// TODO: vsync
+		// TODO: allow enabling vsync
+		// TODO: disable vsync during resize
+		GLX.makeCurrent(display.native, native, glxContext);
+		GLX.swapIntervalEXT(display.native, native, 0);
 
 		title = options.title;
 		m_size = options.size;
-		backgroundColor = options.backgroundColor;
 
 		X11.XClassHint classHint;
 		X11.XWMHints wmHints;
 		X11.XSizeHints sizeHints;
-		classHint.res_class = classHint.res_name = cast(char*) WINDOW_CLASS.ptr;
+		classHint.res_class = classHint.res_name = cast(char*) WINDOW_CLASS.ptr; // TODO: allow customizing window class
 		X11.setWMProperties(display.native, native, null, null, null, 0, &sizeHints, &wmHints, &classHint);
 
 		X11.Atom[] protocols = [
@@ -489,7 +465,6 @@ private:
 		XI2.setMask(mask.mask, XI2.XI_Motion);
 		XI2.setMask(mask.mask, XI2.XI_Enter);
 		XI2.setMask(mask.mask, XI2.XI_Leave);
-		// XI2.setMask(mask.mask, XI2.XI_RawMotion);
 		XI2.selectEvents(display.native, native, &mask, 1);
 		X11.sync(display.native, X11.False);
 
@@ -574,46 +549,6 @@ private:
 	long currentConfigureTimer = -1;
 
 	package void processEvent(X11.XEvent* ev) {
-		string name;
-		switch (ev.type) {
-			case X11.KeyPress: name = "KeyPress"; break;
-			case X11.KeyRelease: name = "KeyRelease"; break;
-			case X11.ButtonPress: name = "ButtonPress"; break;
-			case X11.ButtonRelease: name = "ButtonRelease"; break;
-			case X11.MotionNotify: name = "MotionNotify"; break;
-			case X11.EnterNotify: name = "EnterNotify"; break;
-			case X11.LeaveNotify: name = "LeaveNotify"; break;
-			case X11.FocusIn: name = "FocusIn"; break;
-			case X11.FocusOut: name = "FocusOut"; break;
-			case X11.KeymapNotify: name = "KeymapNotify"; break;
-			case X11.Expose: name = "Expose"; break;
-			case X11.GraphicsExpose: name = "GraphicsExpose"; break;
-			case X11.NoExpose: name = "NoExpose"; break;
-			case X11.VisibilityNotify: name = "VisibilityNotify"; break;
-			case X11.CreateNotify: name = "CreateNotify"; break;
-			case X11.DestroyNotify: name = "DestroyNotify"; break;
-			case X11.UnmapNotify: name = "UnmapNotify"; break;
-			case X11.MapNotify: name = "MapNotify"; break;
-			case X11.MapRequest: name = "MapRequest"; break;
-			case X11.ReparentNotify: name = "ReparentNotify"; break;
-			case X11.ConfigureNotify: name = "ConfigureNotify"; break;
-			case X11.ConfigureRequest: name = "ConfigureRequest"; break;
-			case X11.GravityNotify: name = "GravityNotify"; break;
-			case X11.ResizeRequest: name = "ResizeRequest"; break;
-			case X11.CirculateNotify: name = "CirculateNotify"; break;
-			case X11.CirculateRequest: name = "CirculateRequest"; break;
-			case X11.PropertyNotify: name = "PropertyNotify"; break;
-			case X11.SelectionClear: name = "SelectionClear"; break;
-			case X11.SelectionRequest: name = "SelectionRequest"; break;
-			case X11.SelectionNotify: name = "SelectionNotify"; break;
-			case X11.ColormapNotify: name = "ColormapNotify"; break;
-			case X11.ClientMessage: name = "ClientMessage"; break;
-			case X11.MappingNotify: name = "MappingNotify"; break;
-			case X11.GenericEvent: name = "GenericEvent"; break;
-			default: name = "?"; break;
-		}
-		// writefln!"event %s"(name);
-
 		static bool syncRequest = false;
 		static XSync.XSyncValue syncValue;
 
@@ -632,64 +567,8 @@ private:
 
 			break;
 		case X11.ConfigureNotify:
-			import gd.system.application : application;
-			import std.algorithm : min, max;
-			import std.datetime : Duration, msecs;
-
-			// TODO: do we have to redraw the window if all we did was move it?
-			// not sure how not redrawing it would play with WMs without compositors
-
-			bool resizeBackBuffer(IVec2 newSize) {
-				if (bufferSize == newSize) {
-					return false;
-				}
-
-				m_bufferSize = newSize;
-
-				GLX.destroyPixmap(display.native, glxBackBuffer);
-				X11.freePixmap(display.native, backBuffer);
-
-				backBuffer = X11.createPixmap(display.native, native, bufferSize.x, bufferSize.y, 24);
-				// FIXME: VERY occasionally, the doPaint called after resizeBackBuffer won't actually
-				// fill the backBuffer with any data
-				// X11.setForeground(display.native, gcontext, 0xFF00FFFF);
-				// X11.fillRectangle(display.native, backBuffer, gcontext, 0, 0, bufferSize.x, bufferSize.y);
-				glxBackBuffer = GLX.createPixmap(display.native, fbconfig, backBuffer, null);
-				(cast(GLContext) display.gpuContext).switchToSurface(display.gpuContext.surfaceOf(this), Yes.force);
-
-				return true;
-			}
-
-			// query the current width/height, because xconfigure.width/height can be up to 1 frame behind
-			X11.XWindowAttributes attrs;
-			X11.getWindowAttributes(display.native, native, &attrs);
-			m_size = IVec2(max(attrs.width, 1), max(attrs.height, 1));
-			onSizeChange.emit(m_size);
-
-			bool bufferResized;
-
-			if (oversizeBuffer) {
-				application.timer.cancel(currentConfigureTimer);
-				currentConfigureTimer = application.timer.setTimer(500.msecs, {
-					bool resized = resizeBackBuffer(size);
-					doPaint(IRect(IVec2(), size), resized);
-				});
-
-				IVec2 newSize = bufferSize;
-
-				while (newSize.x < attrs.width) { newSize.x = (newSize.x * 3 + 1) / 2; }
-				while (newSize.y < attrs.height) { newSize.y = (newSize.y * 3 + 1) / 2; }
-
-				newSize.x = min(newSize.x, max(attrs.width, X11.widthOfScreen(attrs.screen)));
-				newSize.y = min(newSize.y, max(attrs.height, X11.heightOfScreen(attrs.screen)));
-
-				bufferResized = resizeBackBuffer(newSize);
-			}
-			else {
-				bufferResized = resizeBackBuffer(size);
-			}
-
-			doPaint(IRect(IVec2(), size), true);
+			// TODO: how can we avoid repainting on both Expose and ConfigureNotify?
+			repaintImmediately();
 
 			if (syncRequest) {
 				syncRequest = false;
@@ -699,19 +578,7 @@ private:
 
 			break;
 		case X11.Expose:
-			IRect region = IRect(
-				ev.xexpose.x, ev.xexpose.y,
-				ev.xexpose.width, ev.xexpose.height,
-			);
-
-			X11.copyArea(display.native,
-				backBuffer, // source
-				native, // destination
-				gcontext,
-				region.x, region.y, // source pos
-				region.width, region.height, // size
-				region.x, region.y, // destination pos
-			);
+			repaintImmediately();
 
 			break;
 		case X11.PropertyDelete:
@@ -1009,43 +876,20 @@ public:
 	package void updateRegion(IRect region) {
 		if (disposed) return;
 
-		doPaint(region, false);
+		repaintImmediately();
 	}
 
-	void doPaint(IRect region, bool flush) {
+	void repaintImmediately() {
 		if (m_paintHandler is null) {
 			return;
 		}
 
-		GPUSurface surface = display.gpuContext.surfaceOf(this);
-		(cast(GLContext) display.gpuContext).switchToSurface(surface);
-		GL.drawBuffer(GL.FRONT_LEFT);
+		GLX.makeCurrent(display.native, native, glxContext);
+		m_paintHandler();
 
-		IRect paintedRegion = m_paintHandler(region, bufferSize, surface);
-		IRect updateRegion = paintedRegion.clipArea(IRect(IVec2(0, 0), size));
-
-		GL.Sync fence = GL.fenceSync(GL.SYNC_GPU_COMMANDS_COMPLETE, 0);
-
-		if (flush) {
-			GL.Enum syncRes;
-
-			do {
-				syncRes = GL.clientWaitSync(fence, GL.SYNC_FLUSH_COMMANDS_BIT, 50_000_000);
-			}
-			while (syncRes == GL.TIMEOUT_EXPIRED);
-		}
-		else {
-			GL.clientWaitSync(fence, GL.SYNC_FLUSH_COMMANDS_BIT, 50_000_000); // 50 ms = 20 fps
-		}
-
-		X11.copyArea(display.native,
-			backBuffer, // source
-			native, // destination
-			gcontext,
-			updateRegion.x, updateRegion.y, // source pos
-			updateRegion.width, updateRegion.height, // size
-			updateRegion.x, updateRegion.y, // destination pos
-		);
+		GLX.swapBuffers(display.native, native);
+		GL.finish(); // apparently needed for nvidia proprietary drivers
+		// TODO: check that that's true
 	}
 
 	private string m_title;
@@ -1070,9 +914,6 @@ public:
 
 		X11.flush(display.native);
 	}
-
-	private IVec2 m_bufferSize;
-	override IVec2 bufferSize() const @property { return m_bufferSize; }
 
 	private IVec2 m_size;
 	override IVec2 size() const @property { return m_size; }
@@ -1184,19 +1025,6 @@ public:
 				X11.mapWindow(display.native, native);
 			}
 		}
-	}
-
-	private Color m_backgroundColor;
-	override Color backgroundColor() const @property { return m_backgroundColor; }
-	override void backgroundColor(Color value) @property {
-		value.a = 1;
-		value = value.clamp;
-
-		if (m_backgroundColor.asUint!"bgra" != value.asUint!"bgra") {
-			X11.setWindowBackground(display.native, native, value.asUint!"bgra");
-		}
-
-		m_backgroundColor = value;
 	}
 
 }

@@ -1,11 +1,8 @@
 module gd.system.display;
 import gd.system.window;
-import gd.system.gpu;
 import gd.resource;
 
 abstract class Display : Resource {
-
-	abstract inout(GPUContext) gpuContext() inout @property;
 
 	/++
 

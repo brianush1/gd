@@ -5,16 +5,13 @@ import gd.signal;
 import gd.graphics.color;
 import gd.cursor;
 import gd.math;
-import gd.system.gpu;
 
 struct WindowInitOptions {
 	int depthSize = 16;
-	bool oversizeBuffer = true;
 
 	string title = "Window";
 	IVec2 size = IVec2(800, 600);
 	WindowState initialState = WindowState.None;
-	Color backgroundColor = Color.fromHex("#fff");
 }
 
 enum PointerFlags {
@@ -68,7 +65,7 @@ enum WindowState : uint {
 	Topmost    = 0x0020,
 }
 
-alias PaintHandler = IRect delegate(IRect, IVec2, GPUSurface);
+alias PaintHandler = void delegate();
 
 struct KeyInfo {
 	Modifiers mods;
@@ -120,15 +117,10 @@ abstract class Window : Resource {
 	abstract string title() const @property;
 	abstract void title(string value) @property;
 
-	abstract IVec2 bufferSize() const @property;
-
 	abstract IVec2 size() const @property;
 	abstract void size(IVec2 value) @property;
 
 	abstract WindowState state() const @property;
 	abstract void state(WindowState value) @property;
-
-	abstract Color backgroundColor() const @property;
-	abstract void backgroundColor(Color value) @property;
 
 }

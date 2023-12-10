@@ -2,11 +2,9 @@ module gd.system.x11.display;
 import gd.system.x11.device;
 import gd.system.x11.window;
 import gd.system.x11.exception;
-import gd.system.gl.opengl;
 import gd.system.window;
 import gd.system.display;
 import gd.system.application;
-import gd.system.gpu;
 import gd.graphics.color;
 import gd.math.rect;
 import gd.resource;
@@ -47,8 +45,6 @@ private:
 		enforce!X11Exception(success, "error in setting detectable autorepeat");
 
 		deviceManager = new X11DeviceManager(this);
-
-		createHeadlessContext();
 	}
 
 	protected override void disposeImpl() {
@@ -56,92 +52,7 @@ private:
 		if (native) X11.closeDisplay(native);
 	}
 
-	package GLX.GLXContext globalGlxContext;
-	GLX.GLXWindow headlessGlxWindow;
-	X11.Window headlessWindow;
-
-	void createHeadlessContext() {
-		int screen = X11.defaultScreen(native);
-		X11.Window root = X11.rootWindow(native, screen);
-
-		int[23] visualAttribs = [
-			GLX.X_RENDERABLE, X11.True,
-			GLX.DRAWABLE_TYPE, GLX.PIXMAP_BIT,
-			GLX.RENDER_TYPE, GLX.RGBA_BIT,
-			GLX.X_VISUAL_TYPE, GLX.TRUE_COLOR,
-			GLX.RED_SIZE, 8,
-			GLX.GREEN_SIZE, 8,
-			GLX.BLUE_SIZE, 8,
-			GLX.ALPHA_SIZE, 8,
-			GLX.DEPTH_SIZE, 8,
-			GLX.STENCIL_SIZE, 8,
-			GLX.DOUBLEBUFFER, X11.False,
-			X11.None,
-		];
-
-		int fbcount;
-		GLX.GLXFBConfig fbconfig;
-		GLX.GLXFBConfig* fbconfigs = GLX.chooseFBConfig(native, screen, visualAttribs.ptr, &fbcount);
-		enforce!X11Exception(fbcount > 0, "could not get framebuffer config");
-
-		int chosenSamples = -1;
-		foreach (i, candidate; fbconfigs[0 .. fbcount]) {
-			int sampleBuffers, samples;
-			GLX.getFBConfigAttrib(native, candidate, GLX.SAMPLE_BUFFERS, &sampleBuffers);
-			GLX.getFBConfigAttrib(native, candidate, GLX.SAMPLES, &samples);
-			if (i == 0 || (sampleBuffers > 0 && samples == 1)) {
-				fbconfig = candidate;
-				chosenSamples = samples;
-			}
-		}
-		// this free call is safe, since no statements between the creation of fbconfigs and this free can throw
-		X11.free(fbconfigs);
-
-		enforce!X11Exception(chosenSamples != -1, "could not get framebuffer configuration");
-
-		int[9] contextAttribs = [
-			GLX.CONTEXT_MAJOR_VERSION_ARB, GL_VERSION_MAJOR,
-			GLX.CONTEXT_MINOR_VERSION_ARB, GL_VERSION_MINOR,
-			GLX.CONTEXT_PROFILE_MASK_ARB, GLX.CONTEXT_CORE_PROFILE_BIT_ARB,
-			GLX.CONTEXT_FLAGS_ARB, GLX.CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-			X11.None,
-		];
-
-		globalGlxContext = GLX.createContextAttribsARB(
-			native,
-			fbconfig,
-			null,
-			X11.True,
-			contextAttribs.ptr,
-		);
-
-		enforce!X11Exception(globalGlxContext != null, "could not create OpenGL context");
-
-		X11.sync(native, X11.False);
-
-		headlessWindow = X11.createSimpleWindow(native, root,
-			0, 0, 1, 1, // x, y, width, height
-			0, // border width
-			0, // border
-			0, // background
-		);
-
-		headlessGlxWindow = GLX.createWindow(native, fbconfig, headlessWindow, null);
-
-		m_gpuContext = new GLContext();
-		m_gpuContext.addDependency(this);
-		m_gpuContext.registerWindow(null, {
-			// TODO: don't call this if it's already the current context
-			GLX.makeCurrent(native, headlessGlxWindow, globalGlxContext);
-		});
-	}
-
 public:
-
-	private GLContext m_gpuContext;
-	override inout(GPUContext) gpuContext() inout @property {
-		return m_gpuContext;
-	}
 
 	template atom(string name, Flag!"create" create = Yes.create) {
 		X11.Atom atomResult;

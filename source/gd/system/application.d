@@ -41,11 +41,11 @@ private __gshared {
 	Application m_application;
 }
 
-Thread guiThread() @property { // @suppress(dscanner.confusing.function_attributes)
+Thread guiThread() @property {
 	return m_guiThread;
 }
 
-Application application() @property { // @suppress(dscanner.confusing.function_attributes)
+Application application() @property {
 	assert(Thread.getThis is guiThread, "application can only be accessed in GUI thread");
 	return m_application;
 }

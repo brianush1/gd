@@ -10,5 +10,5 @@
 	},
 	"description": "A minimal D application.",
 	"license": "proprietary",
-	"name": "win32demo"
+	"name": "timer"
 }
