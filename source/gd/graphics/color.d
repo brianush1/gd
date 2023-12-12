@@ -178,23 +178,16 @@ struct Color {
 		import std.algorithm : clamp;
 
 		static assert({
-			if (order.length != 4) return false;
+			if (order.length > 4) return false;
 
-			bool[char] set;
 			foreach (char ch; order) {
-				if (ch in set) {
-					return false;
-				}
-
 				if (ch != 'a' && ch != 'r' && ch != 'g' && ch != 'b') {
 					return false;
 				}
-
-				set[ch] = true;
 			}
 
 			return true;
-		}(), "order passed to asUint must be a permutation of 'rgba'");
+		}(), "order passed to asUint must be some combination of 'rgba', up to a length of 4");
 
 		uint result = 0;
 		static foreach (i, char ch; order) {

@@ -9,10 +9,7 @@ alias IMat4 = TMat4!int;
 alias FMat4 = TMat4!float;
 alias RMat4 = TMat4!real;
 
-// alias Mat3 = TMat3!double;
-// alias IMat3 = TMat3!int;
-// alias FMat3 = TMat3!float;
-// alias RMat3 = TMat3!real;
+// TODO: opOpAssign
 
 struct TMat4(T) {
 // fields:
@@ -307,6 +304,15 @@ struct TMat4(T) {
 			M_10 / determinantRecip, M_11 / determinantRecip, M_12 / determinantRecip, M_13 / determinantRecip,
 			M_20 / determinantRecip, M_21 / determinantRecip, M_22 / determinantRecip, M_23 / determinantRecip,
 			M_30 / determinantRecip, M_31 / determinantRecip, M_32 / determinantRecip, M_33 / determinantRecip,
+		]);
+	}
+
+	TMat4!T transpose() const {
+		return TMat4!T([
+			this[0, 0], this[1, 0], this[2, 0], this[3, 0],
+			this[0, 1], this[1, 1], this[2, 1], this[3, 1],
+			this[0, 2], this[1, 2], this[2, 2], this[3, 2],
+			this[0, 3], this[1, 3], this[2, 3], this[3, 3],
 		]);
 	}
 

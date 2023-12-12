@@ -150,6 +150,7 @@ struct TVec2(T) {
 		return TVec2!T(-x, -y);
 	}
 
+	// TODO: allow swizzle assignment, i.e. foo.xzy = bar.yyz;
 	TVec2!T opDispatch(string member)() @property const
 	if (member.length == 2) {
 		import std.algorithm : all;

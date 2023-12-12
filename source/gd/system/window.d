@@ -8,6 +8,8 @@ import gd.math;
 
 struct WindowInitOptions {
 	int depthSize = 16;
+	int glVersionMajor = 3;
+	int glVersionMinor = 0;
 
 	string title = "Window";
 	IVec2 size = IVec2(800, 600);
@@ -113,6 +115,8 @@ abstract class Window : Resource {
 	abstract void setIcon(IVec2 size, const(uint)[] data);
 	abstract void setPaintHandler(PaintHandler handler);
 	abstract void invalidate(IRect region);
+
+	abstract void makeContextCurrent();
 
 	abstract string title() const @property;
 	abstract void title(string value) @property;

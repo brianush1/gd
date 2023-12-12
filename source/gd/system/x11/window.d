@@ -13,9 +13,6 @@ import std.exception;
 
 version (gd_X11Impl):
 
-enum GL_VERSION_MAJOR = 3;
-enum GL_VERSION_MINOR = 0;
-
 import gd.bindings.x11;
 import gd.bindings.xcursor;
 import gd.bindings.xfixes;
@@ -362,7 +359,7 @@ private:
 			int sampleBuffers, samples;
 			GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLE_BUFFERS, &sampleBuffers);
 			GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLES, &samples);
-			if (i == 0 || (sampleBuffers > 0 && samples == 1)) { // TODO: samples > chosenSamples ?
+			if (i == 0 || (sampleBuffers > 0 && samples > chosenSamples)) { // TODO: samples > chosenSamples ?
 				fbconfig = candidate;
 				chosenSamples = samples;
 			}
@@ -374,7 +371,6 @@ private:
 
 		X11.XVisualInfo* visualInfo = GLX.getVisualFromFBConfig(display.native, fbconfig);
 		enforce!X11Exception(visualInfo != null, "could not get OpenGL visual");
-		X11.Visual* visual = X11.defaultVisual(display.native, screen);
 
 		X11.XSetWindowAttributes winAttribs;
 		winAttribs.colormap = X11.createColormap(display.native, root, visualInfo.visual, X11.AllocNone);
@@ -388,7 +384,7 @@ private:
 			0, // border width
 			visualInfo.depth, // color depth
 			X11.InputOutput,
-			visual,
+			visualInfo.visual,
 			X11.CWColormap | X11.CWOverrideRedirect,
 			&winAttribs,
 		);
@@ -402,8 +398,8 @@ private:
 		// TODO: free hiddenCursor
 
 		int[9] contextAttribs = [
-			GLX.CONTEXT_MAJOR_VERSION_ARB, GL_VERSION_MAJOR,
-			GLX.CONTEXT_MINOR_VERSION_ARB, GL_VERSION_MINOR,
+			GLX.CONTEXT_MAJOR_VERSION_ARB, options.glVersionMajor,
+			GLX.CONTEXT_MINOR_VERSION_ARB, options.glVersionMinor,
 			GLX.CONTEXT_PROFILE_MASK_ARB, GLX.CONTEXT_CORE_PROFILE_BIT_ARB,
 			GLX.CONTEXT_FLAGS_ARB, GLX.CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			X11.None,
@@ -414,9 +410,9 @@ private:
 		// sync to ensure any errors generated are processed
 		X11.sync(display.native, X11.False);
 
-		// TODO: allow enabling vsync
+		// TODO: allow disabling/enabling vsync
 		// TODO: disable vsync during resize
-		GLX.makeCurrent(display.native, native, glxContext);
+		X11Window.makeContextCurrent();
 		GLX.swapIntervalEXT(display.native, native, 0);
 
 		title = options.title;
@@ -447,6 +443,8 @@ private:
 
 		X11.setWMProtocols(display.native, native, protocols.ptr, cast(int) protocols.length);
 
+		assert(!(options.initialState & WindowState.Visible),
+			"window cannot be visible on creation, since a paint handler ought to be set when the window is first shown");
 		state = options.initialState; // set initial state
 		X11.sync(display.native, X11.False);
 
@@ -567,6 +565,14 @@ private:
 
 			break;
 		case X11.ConfigureNotify:
+			import std.algorithm : min, max;
+
+			// query the current width/height, because xconfigure.width/height can be up to 1 frame behind
+			X11.XWindowAttributes attrs;
+			X11.getWindowAttributes(display.native, native, &attrs);
+			m_size = IVec2(max(attrs.width, 1), max(attrs.height, 1));
+			onSizeChange.emit(m_size);
+
 			// TODO: how can we avoid repainting on both Expose and ConfigureNotify?
 			repaintImmediately();
 
@@ -678,6 +684,9 @@ private:
 
 			KeyCode getKeyCode(size_t startIndex, bool logical) {
 				size_t index = startIndex;
+
+				if (index > keys.length) // countUntil returned -1
+					index = 0;
 
 				do {
 					KeyCode result = keySymToKeyCode(keys[index]);
@@ -873,6 +882,10 @@ public:
 		}
 	}
 
+	override void makeContextCurrent() {
+		GLX.makeCurrent(display.native, native, glxContext);
+	}
+
 	package void updateRegion(IRect region) {
 		if (disposed) return;
 
@@ -884,7 +897,7 @@ public:
 			return;
 		}
 
-		GLX.makeCurrent(display.native, native, glxContext);
+		makeContextCurrent();
 		m_paintHandler();
 
 		GLX.swapBuffers(display.native, native);
