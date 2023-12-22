@@ -1,9 +1,7 @@
 {
-	"name": "bindings",
-	"targetType": "library",
 	"dependencies": {
-		"weakset": {
-			"path": "../../weakset"
-		}
-	}
+		"weakset": "~>1.0.1"
+	},
+	"name": "bindings",
+	"targetType": "library"
 }

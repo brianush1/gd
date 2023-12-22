@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/opengl
+opengl.so
+opengl.dylib
+opengl.dll
+opengl.a
+opengl.lib
+opengl-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
