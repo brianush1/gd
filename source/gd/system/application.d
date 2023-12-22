@@ -1,7 +1,9 @@
 module gd.system.application;
 import gd.system.display;
 import gd.system.timer;
+import gd.system.socket;
 import gd.resource;
+import gd.threading;
 import core.thread;
 
 abstract class Application : Resource {
@@ -10,6 +12,7 @@ abstract class Application : Resource {
 
 	abstract inout(Display) display() inout @property;
 	abstract inout(Timer) timer() inout @property;
+	abstract inout(SocketManager) socketManager() inout @property;
 
 	/++
 
@@ -24,12 +27,10 @@ abstract class Application : Resource {
 	abstract bool isActive();
 	abstract void deactivate();
 
-	abstract void waitForEvents();
-	abstract void processEvents();
+	abstract void processEvents(bool wait = true);
 
 	void startEventLoop() {
 		while (isActive) {
-			waitForEvents();
 			processEvents();
 		}
 	}
@@ -73,7 +74,10 @@ version (unittest) {} else {
 		extern (C) int _Dmain(char[][]);
 
 		extern (C) int gdEventLoopWrapper(char[][] args) {
-			int exitCode = _Dmain(args);
+			int exitCode = 0;
+			spawnTask({
+				exitCode = _Dmain(args);
+			});
 
 			if (exitCode == 0) {
 				application.startEventLoop();

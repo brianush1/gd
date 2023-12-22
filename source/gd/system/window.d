@@ -12,6 +12,8 @@ struct WindowInitOptions {
 	int glVersionMinor = 0;
 
 	string title = "Window";
+	string className = "window";
+	string applicationName = "Application";
 	IVec2 size = IVec2(800, 600);
 	WindowState initialState = WindowState.None;
 }

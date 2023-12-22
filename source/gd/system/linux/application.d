@@ -1,4 +1,5 @@
 module gd.system.linux.application;
+import gd.system.linux.socket;
 import gd.system.linux.timer;
 import gd.system.x11.display;
 import gd.system.application;
@@ -12,6 +13,8 @@ import core.sys.linux.sys.signalfd;
 import core.sys.linux.unistd;
 import core.sys.linux.epoll;
 import core.sys.posix.signal;
+
+package enum MAX_EPOLL_EVENTS = 16;
 
 class LinuxApplication : Application {
 
@@ -28,11 +31,25 @@ class LinuxApplication : Application {
 		close(epollFd);
 	}
 
-	private void addToPoll(int fd, int events = EPOLLIN) {
-		epoll_event ev;
-		ev.data.fd = fd;
-		ev.events = events;
-		epoll_ctl(epollFd, EPOLL_CTL_ADD, ev.data.fd, &ev);
+	package {
+		void addToPoll(int fd, int events = EPOLLIN) {
+			epoll_event ev;
+			ev.data.fd = fd;
+			ev.events = events;
+			epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &ev);
+		}
+
+		void modifyPoll(int fd, int events) {
+			epoll_event ev;
+			ev.data.fd = fd;
+			ev.events = events;
+			epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev);
+		}
+
+		void removeFromPoll(int fd) {
+			epoll_event ev;
+			epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, &ev);
+		}
 	}
 
 	private {
@@ -63,31 +80,51 @@ class LinuxApplication : Application {
 		return m_timer;
 	}
 
+	private {
+		LinuxSocketManager m_socketManager;
+
+		void initSocketManager() {
+			m_socketManager = new LinuxSocketManager(this);
+		}
+	}
+
+	override inout(LinuxSocketManager) socketManager() inout @property {
+		if (!m_socketManager) (cast() this).initSocketManager();
+		return m_socketManager;
+	}
+
 	override bool isActive() {
 		if (m_display && m_display.isActive) return true;
 		if (m_timer && m_timer.isActive) return true;
+		if (m_socketManager && m_socketManager.isActive) return true;
 		return false;
 	}
 
 	override void deactivate() {
 		if (m_display) m_display.deactivate();
 		if (m_timer) m_timer.deactivate();
+		if (m_socketManager) m_socketManager.deactivate();
 	}
 
-	override void waitForEvents() {
+	package epoll_event[] epollEvents;
+
+	override void processEvents(bool wait = true) {
 		if (m_display) {
 			X11.flush(m_display.native);
 			if (m_display.invalidationQueue.length != 0)
-				return;
+				wait = false; // don't wait around if we have an invalidated window
 		}
 
-		epoll_event[] events = new epoll_event[1];
-		epoll_wait(epollFd, events.ptr, cast(int) events.length, -1);
-	}
+		epoll_event[MAX_EPOLL_EVENTS] eventBuf;
+		int numEvents = epoll_wait(epollFd, eventBuf.ptr, MAX_EPOLL_EVENTS, wait ? -1 : 0);
+		if (numEvents == -1)
+			epollEvents = null;
+		else
+			epollEvents = eventBuf[0 .. numEvents];
 
-	override void processEvents() {
 		if (m_display) m_display.processEvents();
 		if (m_timer) m_timer.processEvents();
+		if (m_socketManager) m_socketManager.processEvents();
 	}
 
 }

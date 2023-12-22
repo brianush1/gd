@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/sockets
+sockets.so
+sockets.dylib
+sockets.dll
+sockets.a
+sockets.lib
+sockets-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

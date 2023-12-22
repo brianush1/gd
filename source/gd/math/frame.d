@@ -23,6 +23,7 @@ struct TFrame2(T) {
 		position = TVec2!T(base.position);
 	}
 
+	// TODO: merge API with Frame3 (why does that one not have fromVectors and fromComponents?)
 	static TFrame2!T fromVectors(
 		TVec2!T right,
 		TVec2!T up,
@@ -204,6 +205,10 @@ struct TFrame3(T) {
 		);
 	}
 
+	auto opBinary(string op, R)(TVec3!R other) const if (op == "*") {
+		return (this * TFrame3!R(other)).position;
+	}
+
 	TFrame3!T inverse() const {
 		T determinantRecip = right.magnitudeSq;
 		return TFrame3!T(
@@ -213,6 +218,8 @@ struct TFrame3(T) {
 			TVec3!T(right.z, up.z, forward.z) / determinantRecip,
 		);
 	}
+
+	TFrame3!T rotation() const @property => translate(-position);
 
 	TFrame3!T translate(T x, T y, T z) const { return translate(TVec3!T(x, y, z)); }
 	auto translate(R)(TVec3!R vec) const {

@@ -75,10 +75,28 @@ struct Signal(T...) {
 
 	void emit(T args) const {
 		import std.array : array;
+		import gd.threading : spawnTask;
 
 		foreach (connection; connections.byValue.array) {
-			connection.handler(args);
+			spawnTask({
+				connection.handler(args);
+			});
 		}
+	}
+
+	Tuple!T wait() const {
+		import core.thread.fiber : Fiber;
+
+		Tuple!T result;
+
+		Fiber fiber = Fiber.getThis();
+		(cast() this).once((T args) {
+			result = Tuple!T(args);
+			fiber.call();
+		});
+
+		Fiber.yield();
+		return result;
 	}
 
 }

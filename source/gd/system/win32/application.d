@@ -56,10 +56,7 @@ class Win32Application : Application {
 		if (m_timer) m_timer.deactivate();
 	}
 
-	override void waitForEvents() {
-	}
-
-	override void processEvents() {
+	override void processEvents(bool wait = true) {
 	}
 
 }

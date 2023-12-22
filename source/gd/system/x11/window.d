@@ -413,7 +413,7 @@ private:
 		// TODO: allow disabling/enabling vsync
 		// TODO: disable vsync during resize
 		X11Window.makeContextCurrent();
-		GLX.swapIntervalEXT(display.native, native, 0);
+		GLX.swapIntervalEXT(display.native, native, 1);
 
 		title = options.title;
 		m_size = options.size;
@@ -421,7 +421,18 @@ private:
 		X11.XClassHint classHint;
 		X11.XWMHints wmHints;
 		X11.XSizeHints sizeHints;
-		classHint.res_class = classHint.res_name = cast(char*) WINDOW_CLASS.ptr; // TODO: allow customizing window class
+
+		// toStringz returns an immutable(char)*, and we need ours to be mutable...
+		char[] applicationName = new char[options.applicationName.length + 1];
+		applicationName[0 .. $ - 1] = options.applicationName;
+		applicationName[$ - 1] = 0;
+
+		char[] className = new char[options.className.length + 1];
+		className[0 .. $ - 1] = options.className;
+		className[$ - 1] = 0;
+
+		classHint.res_name = applicationName.ptr;
+		classHint.res_class = className.ptr;
 		X11.setWMProperties(display.native, native, null, null, null, 0, &sizeHints, &wmHints, &classHint);
 
 		X11.Atom[] protocols = [
@@ -901,8 +912,6 @@ public:
 		m_paintHandler();
 
 		GLX.swapBuffers(display.native, native);
-		GL.finish(); // apparently needed for nvidia proprietary drivers
-		// TODO: check that that's true
 	}
 
 	private string m_title;
