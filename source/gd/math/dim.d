@@ -89,8 +89,8 @@ struct Dim2 {
 		return Vec2(x.compute(scaleFactor.x), y.compute(scaleFactor.y));
 	}
 
-	Dim opBinary(string op)(const(Dim) rhs) const if (op == "+" || op == "-") {
-		Dim result;
+	Dim2 opBinary(string op)(const(Dim2) rhs) const if (op == "+" || op == "-") {
+		Dim2 result;
 		result.x = mixin("x" ~ op ~ "rhs.x");
 		result.y = mixin("y" ~ op ~ "rhs.y");
 		return result;
