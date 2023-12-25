@@ -106,4 +106,10 @@ struct Dim2 {
 	auto opUnary(string op)() const if (op == "-") {
 		return Dim2(-x, -y);
 	}
+
+	string toString() const @safe {
+		import std.string : format;
+
+		return format!"(%s, %s)"(x, y);
+	}
 }
