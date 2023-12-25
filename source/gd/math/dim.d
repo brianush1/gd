@@ -75,6 +75,16 @@ struct Dim2 {
 		y = Dim(yScale, yOffset);
 	}
 
+	this(Dim x, double yScale, double yOffset) {
+		this.x = x;
+		y = Dim(yScale, yOffset);
+	}
+
+	this(double xScale, double xOffset, Dim y) {
+		x = Dim(xScale, xOffset);
+		this.y = y;
+	}
+
 	Vec2 compute(Vec2 scaleFactor) const {
 		return Vec2(x.compute(scaleFactor.x), y.compute(scaleFactor.y));
 	}
