@@ -40,8 +40,6 @@ class TcpClient {
 			socket.dispose();
 			throw timeoutException;
 		});
-		import std.stdio : writeln;
-		writeln("connecting to ", address);
 		socket.connect(address);
 		timer.cancel();
 	}
