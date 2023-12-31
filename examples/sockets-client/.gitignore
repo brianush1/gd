@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/sockets-client
+sockets-client.so
+sockets-client.dylib
+sockets-client.dll
+sockets-client.a
+sockets-client.lib
+sockets-client-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
