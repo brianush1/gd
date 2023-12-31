@@ -8,7 +8,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/left_ptr.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/default.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/left_ptr.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/default.png)|
 	)
 	+/
 	Arrow,
@@ -17,7 +17,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/left_ptr.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/default.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/left_ptr.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/default.png)|
 	)
 	+/
 	ArrowLeft,
@@ -26,7 +26,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|N/A|N/A|![Image](/user-data/projects/gd-cursor-docs/Breeze/center_ptr.png)|
+	|N/A|N/A|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/center_ptr.png)|
 	)
 	+/
 	ArrowCenter,
@@ -36,7 +36,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_right_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/right_ptr.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/right_ptr.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_right_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/right_ptr.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/right_ptr.png)|
 	)
 	+/
 	ArrowRight,
@@ -45,7 +45,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/cell.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/plus.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/cell.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/cell.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/plus.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/cell.png)|
 	)
 	+/
 	Cell,
@@ -54,7 +54,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|N/A|![Image](/user-data/projects/gd-cursor-docs/Yaru/color-picker.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/color-picker.png)|
+	|N/A|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/color-picker.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/color-picker.png)|
 	)
 	+/
 	ColorPicker,
@@ -63,7 +63,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_pen.png)|N/A|N/A||
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_pen.png)|N/A|N/A||
 	)
 	+/
 	Pen,
@@ -72,7 +72,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|N/A|![Image](/user-data/projects/gd-cursor-docs/Yaru/pencil.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/pencil.png)|
+	|N/A|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/pencil.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/pencil.png)|
 	)
 	+/
 	Pencil,
@@ -81,7 +81,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|N/A|![Image](/user-data/projects/gd-cursor-docs/Yaru/context-menu.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/context-menu.png)|
+	|N/A|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/context-menu.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/context-menu.png)|
 	)
 	+/
 	ContextMenu,
@@ -90,7 +90,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_copy.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/copy.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/copy.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_copy.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/copy.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/copy.png)|
 	)
 	+/
 	Copy,
@@ -99,7 +99,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/cross_i.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/crosshair.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/crosshair.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/cross_i.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/crosshair.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/crosshair.png)|
 	)
 	+/
 	Crosshair,
@@ -108,7 +108,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_grab2.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/hand1.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/openhand.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_grab2.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/hand1.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/openhand.png)|
 	)
 	+/
 	Grab,
@@ -117,7 +117,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_grabbing.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/grabbing.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/dnd-move.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_grabbing.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/grabbing.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/dnd-move.png)|
 	)
 	+/
 	Grabbing,
@@ -126,7 +126,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_link.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/hand2.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/pointer.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_link.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/hand2.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/pointer.png)|
 	)
 	+/
 	Hand,
@@ -135,7 +135,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_helpsel.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/question_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/help.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_helpsel.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/question_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/help.png)|
 	)
 	+/
 	Help,
@@ -144,7 +144,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_alias.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/dnd-link.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/alias.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_alias.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/dnd-link.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/alias.png)|
 	)
 	+/
 	Link,
@@ -153,7 +153,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_move.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/move.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/fleur.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_move.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/move.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/fleur.png)|
 	)
 	+/
 	Move,
@@ -162,7 +162,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_unavail.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/dnd-no-drop.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/no-drop.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_unavail.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/dnd-no-drop.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/no-drop.png)|
 	)
 	+/
 	NoDrop,
@@ -174,7 +174,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_unavail.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/crossed_circle.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/not-allowed.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_unavail.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/crossed_circle.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/not-allowed.png)|
 	)
 	+/
 	NotAllowed,
@@ -183,7 +183,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_move.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/all-scroll.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/all-scroll.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_move.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/all-scroll.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/all-scroll.png)|
 	)
 	+/
 	Pan,
@@ -192,7 +192,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_working.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/left_ptr_watch.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/progress.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_working.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/left_ptr_watch.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/progress.png)|
 	)
 	+/
 	Progress,
@@ -201,7 +201,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/splitv.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/sb_v_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/row-resize.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/splitv.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/sb_v_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/row-resize.png)|
 	)
 	+/
 	SplitVertical,
@@ -210,7 +210,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/splith.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/sb_h_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/col-resize.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/splith.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/sb_h_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/col-resize.png)|
 	)
 	+/
 	SplitHorizontal,
@@ -219,7 +219,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/sizev.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/sb_v_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/row-resize.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/sizev.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/sb_v_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/row-resize.png)|
 	)
 	+/
 	ResizeRow,
@@ -228,7 +228,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/sizeh.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/sb_h_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/col-resize.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/sizeh.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/sb_h_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/col-resize.png)|
 	)
 	+/
 	ResizeColumn,
@@ -237,7 +237,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_ns.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/top_side.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/top_side.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_ns.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/top_side.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/top_side.png)|
 	)
 	+/
 	ResizeN,
@@ -246,7 +246,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_ew.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/left_side.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/left_side.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_ew.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/left_side.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/left_side.png)|
 	)
 	+/
 	ResizeW,
@@ -255,7 +255,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_ns.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/bottom_side.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/bottom_side.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_ns.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/bottom_side.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/bottom_side.png)|
 	)
 	+/
 	ResizeS,
@@ -264,7 +264,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_ew.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/right_side.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/right_side.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_ew.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/right_side.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/right_side.png)|
 	)
 	+/
 	ResizeE,
@@ -273,7 +273,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_nesw.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/top_right_corner.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/top_right_corner.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_nesw.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/top_right_corner.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/top_right_corner.png)|
 	)
 	+/
 	ResizeNE,
@@ -282,7 +282,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_nwse.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/top_left_corner.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/top_left_corner.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_nwse.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/top_left_corner.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/top_left_corner.png)|
 	)
 	+/
 	ResizeNW,
@@ -291,7 +291,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_nesw.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/bottom_left_corner.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/bottom_left_corner.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_nesw.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/bottom_left_corner.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/bottom_left_corner.png)|
 	)
 	+/
 	ResizeSW,
@@ -300,7 +300,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_nwse.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/bottom_right_corner.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/bottom_right_corner.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_nwse.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/bottom_right_corner.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/bottom_right_corner.png)|
 	)
 	+/
 	ResizeSE,
@@ -309,7 +309,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_ns.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/sb_v_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/size_ver.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_ns.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/sb_v_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/size_ver.png)|
 	)
 	+/
 	ResizeNS,
@@ -318,7 +318,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_ew.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/sb_h_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/size_hor.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_ew.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/sb_h_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/size_hor.png)|
 	)
 	+/
 	ResizeEW,
@@ -327,7 +327,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_nesw.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/fd_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/size_bdiag.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_nesw.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/fd_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/size_bdiag.png)|
 	)
 	+/
 	ResizeNESW,
@@ -336,7 +336,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_nwse.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/bd_double_arrow.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/size_fdiag.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_nwse.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/bd_double_arrow.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/size_fdiag.png)|
 	)
 	+/
 	ResizeNWSE,
@@ -345,7 +345,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/beam_i.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/xterm.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/text.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/beam_i.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/xterm.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/text.png)|
 	)
 	+/
 	Text,
@@ -354,7 +354,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/beam_i_vertical.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/vertical-text.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/vertical-text.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/beam_i_vertical.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/vertical-text.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/vertical-text.png)|
 	)
 	+/
 	VerticalText,
@@ -363,7 +363,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_busy.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/watch.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/wait.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_busy.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/watch.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/wait.png)|
 	)
 	+/
 	Wait,
@@ -372,7 +372,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_zoom-in.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/zoom-in.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/zoom-in.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_zoom-in.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/zoom-in.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/zoom-in.png)|
 	)
 	+/
 	ZoomIn,
@@ -381,7 +381,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](/user-data/projects/gd-cursor-docs/Windows/aero_zoom-out.png)|![Image](/user-data/projects/gd-cursor-docs/Yaru/zoom-out.png)|![Image](/user-data/projects/gd-cursor-docs/Breeze/zoom-out.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_zoom-out.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/zoom-out.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/zoom-out.png)|
 	)
 	+/
 	ZoomOut,
