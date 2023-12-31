@@ -70,6 +70,10 @@ struct Address {
 				}
 				result ~= "]";
 			}
+			
+			if (result == "[::]")
+				result = "[::0]";
+
 			break;
 		}
 
