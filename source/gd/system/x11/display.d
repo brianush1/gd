@@ -99,6 +99,8 @@ public:
 		foreach (win; activeWindows.byKey.array) {
 			win.state = win.state & ~WindowState.Visible;
 		}
+
+		invalidationQueue = null;
 	}
 
 	private void updateInvalidatedRegions() {
