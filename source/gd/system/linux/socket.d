@@ -322,37 +322,68 @@ class LinuxSocket : Socket {
 
 			if (ev & EPOLLIN) {
 				if (isListening) {
-					int clientSock = accept(fd, null, null);
-					if (clientSock == -1) {
-						// TODO: how would we properly handle an error here?
-						return;
-					}
+					while (true) {
+						int clientSock = accept(fd, null, null);
+						if (clientSock == -1) {
+							if (errno == EAGAIN || errno == EWOULDBLOCK) {
+								break;
+							}
+							else {
+								// TODO: how would we properly handle an error here?
+								import std.stdio : writeln;
+								writeln("error: ", errnoToMacroName(errno));
+								break;
+							}
+						}
 
-					LinuxSocket newSocket = new LinuxSocket(socketManager, clientSock, family, protocol);
-					newSocket.addDependency(this);
-					onAccept.emit(newSocket);
+						int attrs = fcntl(clientSock, F_GETFL, 0);
+						attrs |= O_NONBLOCK;
+						fcntl(clientSock, F_SETFL, attrs);
+
+						LinuxSocket newSocket = new LinuxSocket(socketManager, clientSock, family, protocol);
+						newSocket.addDependency(this);
+						onAccept.emit(newSocket);
+					}
 				}
 				else {
-					ubyte[1024] buffer;
-					final switch (family) {
-					case AddressFamily.IPv4:
-						sockaddr_in addrin;
-						socklen_t len = addrin.sizeof;
-						ssize_t received = recvfrom(fd, buffer.ptr, buffer.length, 0,
-							cast(sockaddr*) &addrin, &len);
-						if (received > 0) {
-							onReceive.emit(convertAddress(addrin), buffer[0 .. received]);
+					while (true) {
+						ubyte[1024] buffer;
+						Address addr;
+						ssize_t received;
+						final switch (family) {
+						case AddressFamily.IPv4:
+							sockaddr_in addrin;
+							socklen_t len = addrin.sizeof;
+							received = recvfrom(fd, buffer.ptr, buffer.length, 0,
+								cast(sockaddr*) &addrin, &len);
+							addr = convertAddress(addrin);
+							break;
+						case AddressFamily.IPv6:
+							sockaddr_in6 addrin;
+							socklen_t len = addrin.sizeof;
+							received = recvfrom(fd, buffer.ptr, buffer.length, 0,
+								cast(sockaddr*) &addrin, &len);
+							addr = convertAddress(addrin);
+							break;
 						}
-						break;
-					case AddressFamily.IPv6:
-						sockaddr_in6 addrin;
-						socklen_t len = addrin.sizeof;
-						ssize_t received = recvfrom(fd, buffer.ptr, buffer.length, 0,
-							cast(sockaddr*) &addrin, &len);
-						if (received > 0) {
-							onReceive.emit(convertAddress(addrin), buffer[0 .. received]);
+
+						if (received == -1) {
+							if (errno == EAGAIN || errno == EWOULDBLOCK) {
+								break;
+							}
+							else {
+								// TODO: how do we handle an error here
+								import std.stdio : writeln;
+								writeln("error: ", errnoToMacroName(errno));
+								continue;
+							}
 						}
-						break;
+						else if (received > 0) {
+							onReceive.emit(addr, buffer[0 .. received]);
+						}
+						else {
+							break;
+						}
 					}
 				}
 			}
