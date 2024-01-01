@@ -1,7 +1,11 @@
 module gd.math;
-public import gd.math.vec;
-public import gd.math.mat;
-public import gd.math.frame;
 public import gd.math.dim;
+public import gd.math.frame2;
+public import gd.math.frame3;
+public import gd.math.mat3;
+public import gd.math.mat4;
 public import gd.math.rect;
 public import gd.math.util;
+public import gd.math.vec2;
+public import gd.math.vec3;
+public import gd.math.vec4;

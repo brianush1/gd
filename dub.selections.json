@@ -1,6 +1,8 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"imageformats": "7.0.2"
+		"imageformats": "7.0.2",
+		"silly": "1.1.1",
+		"weakset": "1.0.1"
 	}
 }

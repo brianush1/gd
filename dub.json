@@ -28,7 +28,8 @@
 	"copyright": "Copyright © 2022, Brian",
 	"dependencies": {
 		"gd:bindings": "*",
-		"imageformats": "~>7.0.2"
+		"imageformats": "~>7.0.2",
+		"silly": "~>1.1.1"
 	},
 	"description": "GUI for D",
 	"license": "BSL-1.0",

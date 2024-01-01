@@ -1,5 +1,5 @@
 module gd.math.dim;
-import gd.math.vec;
+import gd.math.vec2;
 
 struct Dim {
 	double scale = 0;
