@@ -11,6 +11,7 @@ bindings.dll
 bindings.a
 libbindings.a
 bindings.lib
+gd_bindings.lib
 bindings-test-*
 *.exe
 *.pdb

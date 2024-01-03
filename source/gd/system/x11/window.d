@@ -2,11 +2,12 @@ module gd.system.x11.window;
 import gd.system.x11.display;
 import gd.system.x11.device;
 import gd.system.x11.exception;
+import gd.system.display;
 import gd.system.window;
 import gd.resource;
 import gd.graphics.color;
 import gd.keycode;
-import gd.cursor;
+import gd.cursor : Cursors;
 import gd.math;
 import std.typecons;
 import std.exception;
@@ -69,6 +70,7 @@ class X11MousePointer : Pointer {
 		}
 
 		m_flags = flags;
+		onFlagsChange.emit(m_flags);
 	}
 
 	private PointerFlags m_flags;
@@ -102,71 +104,17 @@ class X11MousePointer : Pointer {
 		return Vec2(0, 0);
 	}
 
-	private static string[Cursors] cursorNameMap;
-	static this() {
-		cursorNameMap[Cursors.Arrow] = "default";
-		cursorNameMap[Cursors.ArrowLeft] = "left_ptr";
-		cursorNameMap[Cursors.ArrowCenter] = "center_ptr";
-		cursorNameMap[Cursors.ArrowRight] = "right_ptr";
-		cursorNameMap[Cursors.Cell] = "cell";
-		cursorNameMap[Cursors.ColorPicker] = "color-picker";
-		cursorNameMap[Cursors.Pen] = "pencil"; // TODO: this
-		cursorNameMap[Cursors.Pencil] = "pencil";
-		cursorNameMap[Cursors.ContextMenu] = "context-menu";
-		cursorNameMap[Cursors.Copy] = "copy";
-		cursorNameMap[Cursors.Crosshair] = "crosshair";
-		cursorNameMap[Cursors.Grab] = "grab";
-		cursorNameMap[Cursors.Grabbing] = "grabbing";
-		cursorNameMap[Cursors.Hand] = "pointer";
-		cursorNameMap[Cursors.Help] = "help";
-		cursorNameMap[Cursors.Link] = "alias";
-		cursorNameMap[Cursors.Move] = "fleur";
-		cursorNameMap[Cursors.NoDrop] = "no-drop";
-		cursorNameMap[Cursors.NotAllowed] = "not-allowed";
-		cursorNameMap[Cursors.Pan] = "all-scroll";
-		cursorNameMap[Cursors.Progress] = "progress";
-		cursorNameMap[Cursors.SplitVertical] = "split_v";
-		cursorNameMap[Cursors.SplitHorizontal] = "split_h";
-		cursorNameMap[Cursors.ResizeRow] = "row-resize";
-		cursorNameMap[Cursors.ResizeColumn] = "col-resize";
-		cursorNameMap[Cursors.ResizeN] = "top_side";
-		cursorNameMap[Cursors.ResizeW] = "left_side";
-		cursorNameMap[Cursors.ResizeS] = "bottom_side";
-		cursorNameMap[Cursors.ResizeE] = "right_side";
-		cursorNameMap[Cursors.ResizeNE] = "top_right_corner";
-		cursorNameMap[Cursors.ResizeNW] = "top_left_corner";
-		cursorNameMap[Cursors.ResizeSW] = "bottom_left_corner";
-		cursorNameMap[Cursors.ResizeSE] = "bottom_right_corner";
-		cursorNameMap[Cursors.ResizeNS] = "size_ver";
-		cursorNameMap[Cursors.ResizeEW] = "size_hor";
-		cursorNameMap[Cursors.ResizeNESW] = "size_bdiag";
-		cursorNameMap[Cursors.ResizeNWSE] = "size_fdiag";
-		cursorNameMap[Cursors.Text] = "text";
-		cursorNameMap[Cursors.VerticalText] = "vertical-text";
-		cursorNameMap[Cursors.Wait] = "wait";
-		cursorNameMap[Cursors.ZoomIn] = "zoom-in";
-		cursorNameMap[Cursors.ZoomOut] = "zoom-out";
+	override void cursor(Cursor value) @property {
+		enforce!X11Exception(cast(X11Cursor) value, "can't pass non-X11 cursor to X11 pointer");
+
+		XI2.defineCursor(window.display.native, deviceId, window.native, (cast(X11Cursor) value).native);
 	}
 
 	override void cursor(Cursors value) @property {
-		import std.string : toStringz;
+		if (value !in window.display.systemCursorMap)
+			value = Cursors.Arrow;
 
-		if (value == Cursors.None) {
-			XI2.defineCursor(window.display.native, deviceId, window.native, window.hiddenCursor);
-			return;
-		}
-
-		if (value !in cursorNameMap)
-			return;
-
-		X11.Cursor cursor = XCursor.libraryLoadCursor(window.display.native, cursorNameMap[value].toStringz);
-		if (cursor != X11.None) {
-			XI2.defineCursor(window.display.native, deviceId, window.native, cursor);
-
-			// TODO: keep the cursor around and free it at the end of the program
-			// just in case some window manager needs it to stay alive
-			X11.freeCursor(window.display.native, cursor);
-		}
+		cursor = window.display.systemCursorMap[value];
 	}
 
 	private {
@@ -298,8 +246,6 @@ private:
 	GLX.GLXFBConfig fbconfig;
 	GLX.GLXContext glxContext;
 
-	X11.Cursor hiddenCursor;
-
 	immutable(XSync.XSyncCounter) xsyncCounter = X11.None;
 
 	X11MousePointer[] m_pointers;
@@ -388,14 +334,6 @@ private:
 			X11.CWColormap | X11.CWOverrideRedirect,
 			&winAttribs,
 		);
-
-		X11.XColor color;
-		ubyte[1] data = [0];
-
-		X11.Pixmap pixmap = X11.createBitmapFromData(display.native, native, cast(char*) data.ptr, 1, 1);
-		hiddenCursor = X11.createPixmapCursor(display.native, pixmap, pixmap, &color, &color, 0, 0);
-		X11.freePixmap(display.native, pixmap);
-		// TODO: free hiddenCursor
 
 		int[9] contextAttribs = [
 			GLX.CONTEXT_MAJOR_VERSION_ARB, options.glVersionMajor,
@@ -800,6 +738,7 @@ private:
 				case 1: button = MouseButton.Left; break;
 				case 2: button = MouseButton.Middle; break;
 				case 3: button = MouseButton.Right; break;
+				// TODO: X1 and X2
 				default: button = MouseButton.Unknown; break;
 			}
 

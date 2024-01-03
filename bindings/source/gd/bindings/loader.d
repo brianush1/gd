@@ -5,6 +5,11 @@ struct BindingName {
 	string name;
 }
 
+interface SharedLibrary {
+extern (System) @nogc nothrow:
+	void* getProcAddress(const(char)* name);
+}
+
 LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName)(string[] libraries)
 		if (is(LibraryType : Resource)) {
 	enum Members = {
@@ -19,7 +24,7 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 		assert(0);
 	}();
 
-	final class ResultType : LibraryType {
+	final class ResultType : LibraryType, SharedLibrary {
 		protected override void disposeImpl() {
 			timesOpened -= 1;
 			if (timesOpened > 0) {
@@ -61,6 +66,38 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 			}
 
 			write("extern (System) @nogc nothrow:
+
+			void* getProcAddress(const(char)* name) {
+				version (Posix) {
+					foreach (dl; dls) {
+						dlerror();
+
+						void* sym = dlsym(dl, name);
+						if (dlerror()) {
+							continue;
+						}
+
+						return sym;
+					}
+
+					return null;
+				}
+				else version (Windows) {
+					foreach (dl; dls) {
+						void* sym = GetProcAddress(dl, name);
+						if (!sym) {
+							continue;
+						}
+
+						return sym;
+					}
+
+					return null;
+				}
+				else {
+					static assert(0);
+				}
+			}
 
 			version (Posix) {
 				import core.sys.posix.dlfcn : dlerror, dlsym;
@@ -120,31 +157,7 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 				write("\");
 							}
 
-							version (Posix) {
-								foreach (dl; dls) {
-									dlerror();
-
-									void* sym = dlsym(dl, libraryName);
-									if (dlerror()) {
-										continue;
-									}
-
-									*cast(void**)&fun = sym;
-								}
-							}
-							else version (Windows) {
-								foreach (dl; dls) {
-									void* sym = GetProcAddress(dl, libraryName);
-									if (!sym) {
-										continue;
-									}
-
-									*cast(void**)&fun = sym;
-								}
-							}
-							else {
-								static assert(0);
-							}
+							*cast(void**)&fun = getProcAddress(libraryName);
 						}
 
 						assert(fun !is null, \"error when loading member ");

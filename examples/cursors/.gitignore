@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/cursors
+cursors.so
+cursors.dylib
+cursors.dll
+cursors.a
+cursors.lib
+cursors-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

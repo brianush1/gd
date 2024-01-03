@@ -190,6 +190,9 @@ abstract class Resource {
 			}
 
 			try {
+				// TODO: do we wanna queue the disposeImpl calls to be called on the
+				// main thread? some GUI stuff might break if the destructors get called
+				// on other threads
 				disposeImpl();
 			}
 			finally {

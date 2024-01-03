@@ -1,10 +1,12 @@
 module gd.system.window;
+import gd.system.display;
 import gd.resource;
 import gd.keycode;
 import gd.signal;
 import gd.graphics.color;
-import gd.cursor;
+import gd.cursor : Cursors;
 import gd.math;
+import std.typecons;
 
 struct WindowInitOptions {
 	int depthSize = 16;
@@ -14,6 +16,7 @@ struct WindowInitOptions {
 	string title = "Window";
 	string className = "window";
 	string applicationName = "Application";
+	Nullable!IVec2 position; // TODO: implement this on X11
 	IVec2 size = IVec2(800, 600);
 	WindowState initialState = WindowState.None;
 }
@@ -30,6 +33,7 @@ enum PointerFlags {
 
 abstract class Pointer : Resource {
 
+	Signal!PointerFlags onFlagsChange;
 	abstract PointerFlags flags() const @property;
 
 	Signal!Vec2 onPositionChange;
@@ -42,6 +46,7 @@ abstract class Pointer : Resource {
 	Signal!Vec2 onTiltChange;
 	abstract Vec2 tilt() const @property;
 
+	abstract void cursor(Cursor value) @property;
 	abstract void cursor(Cursors value) @property;
 
 	/++ raw relative motion event; see also onPositionChange +/
@@ -72,9 +77,15 @@ enum WindowState : uint {
 alias PaintHandler = void delegate();
 
 struct KeyInfo {
+
 	Modifiers mods;
+
+	/++ This is the name of the key that was pressed in a standard QWERTY layout +/
 	KeyCode physical;
+
+	/++ This is the key that was pressed in the user's current keyboard layout +/
 	KeyCode logical;
+
 }
 
 abstract class Window : Resource {
@@ -89,7 +100,7 @@ abstract class Window : Resource {
 	Signal!Pointer onPointerAdd;
 	Signal!KeyInfo onKeyPress;
 	Signal!KeyInfo onKeyRelease;
-	Signal!() onFocusEnter;
+	Signal!() onFocusEnter; // TODO: implement these 2 on Linux
 	Signal!() onFocusLeave;
 	Signal!(uint, Vec2) onTouchStart;
 	Signal!(uint, Vec2) onTouchMove;

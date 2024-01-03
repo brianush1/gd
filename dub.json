@@ -19,6 +19,14 @@
 			"platforms": [
 				"windows"
 			],
+			"lflags": [
+				"/subsystem:windows"
+			],
+			"libs": [
+				"User32",
+				"Gdi32",
+				"opengl32"
+			],
 			"targetType": "library",
 			"versions": [
 				"gd_Win32"
@@ -34,6 +42,9 @@
 	"description": "GUI for D",
 	"license": "BSL-1.0",
 	"name": "gd",
+	"stringImportPaths": [
+		"assets"
+	],
 	"subPackages": [
 		"./bindings/"
 	]

@@ -88,13 +88,19 @@ version (unittest) {} else {
 		}
 	}
 
-	shared static this() {
-		// HACK: scan the stack to find where _Dmain is passed to _d_run_main2, and override that value
-		void* p;
-		void** s = &p;
-		while (*s != &_Dmain)
-			s += 1;
-		*s = &gdEventLoopWrapper;
+	version (gd_Win32) {
+		// ensure that WinMain is compiled
+		import gd.system.win32.winmain;
+	}
+	else {
+		shared static this() {
+			// HACK: scan the stack to find where _Dmain is passed to _d_run_main2, and override that value
+			void* p;
+			void** s = &p;
+			while (*s != &_Dmain)
+				s += 1;
+			*s = &gdEventLoopWrapper;
+		}
 	}
 }
 

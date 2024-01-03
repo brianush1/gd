@@ -54,7 +54,7 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|N/A|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/color-picker.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/color-picker.png)|
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/cross_i.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/color-picker.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/color-picker.png)|
 	)
 	+/
 	ColorPicker,
@@ -63,19 +63,10 @@ enum Cursors {
 	$(SMALL_TABLE
 	|Windows|Ubuntu|KDE|
 	|---|---|---|
-	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_pen.png)|N/A|N/A||
+	|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Windows/aero_pen.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/pencil.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/pencil.png)|
 	)
 	+/
-	Pen,
-
-	/++
-	$(SMALL_TABLE
-	|Windows|Ubuntu|KDE|
-	|---|---|---|
-	|N/A|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Yaru/pencil.png)|![Image](https://raw.githubusercontent.com/brianush1/gd/master/doc-images/cursors/Breeze/pencil.png)|
-	)
-	+/
-	Pencil,
+	Handwriting,
 
 	/++
 	$(SMALL_TABLE

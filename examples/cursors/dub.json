@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"Brian"
+	],
+	"copyright": "Copyright © 2024, Brian",
+	"dependencies": {
+		"gd": {
+			"path": "../.."
+		},
+		"imageformats": "~>7.0.2"
+	},
+	"description": "A minimal D application.",
+	"license": "proprietary",
+	"name": "cursors"
+}
