@@ -66,7 +66,7 @@ class Win32Display : Display {
 		WNDCLASSEXW wc;
 		wc.cbSize = WNDCLASSEXW.sizeof;
 		wc.style = CS_HREDRAW | CS_VREDRAW;
-		wc.lpfnWndProc = &wndProc;
+		wc.lpfnWndProc = &win32WindowWndProc;
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
 		wc.hInstance = hInstance;

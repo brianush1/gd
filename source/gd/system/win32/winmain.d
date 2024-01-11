@@ -1,6 +1,9 @@
 module gd.system.win32.winmain;
 
+version (none):
 version (gd_Win32):
+
+version = gd_WinMain;
 
 import core.runtime;
 import core.sys.windows.windows;

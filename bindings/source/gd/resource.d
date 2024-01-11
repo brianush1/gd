@@ -205,8 +205,6 @@ abstract class Resource {
 				import core.stdc.stdlib : malloc, free;
 
 				Resource* parentsCopy = cast(Resource*) malloc(parents.length * Resource.sizeof);
-				scope (exit)
-					free(parentsCopy);
 
 				size_t index = 0;
 				foreach (parent; parents.byKey) {
@@ -217,6 +215,9 @@ abstract class Resource {
 				foreach (i; 0 .. parents.length) {
 					parentsCopy[i].m_children.remove(this);
 				}
+
+				// TODO: scope(exit) below parentsCopy declaration; makes LLVM crash tho
+				free(parentsCopy);
 			}
 		}
 	}

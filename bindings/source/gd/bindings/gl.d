@@ -29,7 +29,14 @@ GLLibrary loadGL() {
 
 	return loadSharedLibrary!(GLLibrary, delegate(string name) {
 		return "gl" ~ cast(char)(name[0] + 'A' - 'a') ~ name[1 .. $];
-	})(libraries);
+	}, "
+		version (Windows) {
+			import core.sys.windows.wingdi : wglGetProcAddress;
+			void* sym = wglGetProcAddress(name);
+			if (sym)
+				return sym;
+		}
+	")(libraries);
 }
 
 abstract class GLLibrary : Resource {

@@ -46,6 +46,7 @@ private {
 	}
 }
 
+// TODO: Fiber.reset
 void spawnTask(void delegate() fn) {
 	TaskFiber fiber;
 

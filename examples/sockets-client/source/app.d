@@ -6,7 +6,7 @@ import gd.timer;
 
 void main() {
 	UdpSocket udp = new UdpSocket("::0", 0);
-	udp.sendTo(resolveAddress("::0", 8091)[0].address, "Hello!");
+	udp.sendTo(resolveAddress("localhost", 8091)[0].address, "Hello!");
 	writeln("Sent packet.");
 	udp.onReceive.connect((Address address, ubyte[] buffer) {
 		writeln("Received packet from ", address.toString, ":");

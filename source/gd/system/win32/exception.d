@@ -30,17 +30,18 @@ package T safeCall(T, Args...)(scope T delegate(Args) dg, Args args) nothrow {
 	}
 	catch (Throwable ex) { // @suppress(dscanner.suspicious.catch_em_all)
 		import core.stdc.stdlib : exit;
+		import core.stdc.stdio : printf;
 		import std.string : toStringz;
 
 		try {
-			MessageBoxA(null, ex.toString.toStringz, "Uncaught runtime error", MB_ICONEXCLAMATION);
+			const(char)* s = ex.toString.toStringz;
+			printf("Uncaught runtime error: %s\n", s);
+			MessageBoxA(null, s, "Uncaught runtime error", MB_ICONEXCLAMATION);
 		}
 		catch (Throwable ex) { // @suppress(dscanner.suspicious.catch_em_all)
 			MessageBoxA(null, "An error occurred while trying to generate an error report",
 				"Uncaught runtime error", MB_ICONEXCLAMATION);
 		}
 		exit(1);
-		static if (!is(T == void))
-			return T.init;
 	}
 }

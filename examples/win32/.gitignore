@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/win32
+win32.so
+win32.dylib
+win32.dll
+win32.a
+win32.lib
+win32-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

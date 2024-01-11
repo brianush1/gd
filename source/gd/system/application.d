@@ -92,7 +92,8 @@ version (unittest) {} else {
 		// ensure that WinMain is compiled
 		import gd.system.win32.winmain;
 	}
-	else {
+
+	version (gd_WinMain) {} else {
 		shared static this() {
 			// HACK: scan the stack to find where _Dmain is passed to _d_run_main2, and override that value
 			void* p;

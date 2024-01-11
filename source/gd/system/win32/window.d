@@ -459,7 +459,7 @@ private {
 
 }
 
-extern (Windows) LRESULT wndProc(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) nothrow {
+extern (Windows) LRESULT win32WindowWndProc(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) nothrow {
 	return safeCall(&wndProcD, hwnd, Msg, wParam, lParam);
 }
 
@@ -519,8 +519,8 @@ private LRESULT wndProcD(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 	case WM_ERASEBKGND:
 		return TRUE;
 	case WM_PAINT:
-		self.repaintImmediately();
 		ValidateRect(hwnd, null);
+		self.repaintImmediately();
 		return 0;
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:

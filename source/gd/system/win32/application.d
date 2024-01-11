@@ -1,5 +1,6 @@
 module gd.system.win32.application;
 import gd.system.win32.display;
+import gd.system.win32.socket;
 import gd.system.win32.timer;
 import gd.system.application;
 import gd.system.display;
@@ -45,21 +46,16 @@ class Win32Application : Application {
 		return m_timer;
 	}
 
-	// private {
-	// 	Win32SocketManager m_socketManager;
+	private {
+		Win32SocketManager m_socketManager;
 
-	// 	void initSocketManager() {
-	// 		m_socketManager = new Win32SocketManager(this);
-	// 	}
-	// }
+		void initSocketManager() {
+			m_socketManager = new Win32SocketManager(this);
+		}
+	}
 
-	// override inout(Win32SocketManager) socketManager() inout @property {
-	// 	if (!m_socketManager) (cast() this).initSocketManager();
-	// 	return m_socketManager;
-	// }
-
-	private SocketManager m_socketManager;
-	override inout(SocketManager) socketManager() inout @property {
+	override inout(Win32SocketManager) socketManager() inout @property {
+		if (!m_socketManager) (cast() this).initSocketManager();
 		return m_socketManager;
 	}
 

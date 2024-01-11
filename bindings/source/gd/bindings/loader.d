@@ -10,7 +10,7 @@ extern (System) @nogc nothrow:
 	void* getProcAddress(const(char)* name);
 }
 
-LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName)(string[] libraries)
+LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName, string extraMixin = "")(string[] libraries)
 		if (is(LibraryType : Resource)) {
 	enum Members = {
 		string[] members = [__traits(allMembers, LibraryType)];
@@ -79,8 +79,6 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 
 						return sym;
 					}
-
-					return null;
 				}
 				else version (Windows) {
 					foreach (dl; dls) {
@@ -91,12 +89,14 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 
 						return sym;
 					}
-
-					return null;
 				}
 				else {
 					static assert(0);
 				}
+
+				"~extraMixin~"
+
+				return null;
 			}
 
 			version (Posix) {
