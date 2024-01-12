@@ -275,14 +275,29 @@ class Win32Display : Display {
 		return activeWindows.length > 0;
 	}
 
+	package(gd.system) IRect[Win32Window] invalidationQueue;
+
 	override void deactivate() {
 		import std.array : array;
 
 		foreach (win; activeWindows.byKey.array) {
 			win.state = win.state & ~WindowState.Visible;
 		}
+
+		invalidationQueue = null;
 	}
 
-	override void processEvents() {}
+	private void updateInvalidatedRegions() {
+		IRect[Win32Window] oldQueue = invalidationQueue;
+		invalidationQueue = null;
+
+		foreach (win, region; oldQueue) {
+			win.updateRegion(region);
+		}
+	}
+
+	override void processEvents() {
+		updateInvalidatedRegions();
+	}
 
 }

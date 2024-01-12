@@ -296,13 +296,24 @@ public:
 		m_paintHandler = handler;
 	}
 
-	override void invalidate(IRect region) {
+	package void updateRegion(IRect region) {
+		if (disposed) return;
+
 		RECT rect;
 		rect.left = region.left;
 		rect.top = region.top;
 		rect.right = region.right;
 		rect.bottom = region.bottom;
 		InvalidateRect(hwnd, &rect, false);
+	}
+
+	override void invalidate(IRect region) {
+		if (IRect* invalidatedRegion = this in display.invalidationQueue) {
+			*invalidatedRegion = invalidatedRegion.minimalUnion(region);
+		}
+		else {
+			display.invalidationQueue[this] = region;
+		}
 	}
 
 	override void makeContextCurrent() {

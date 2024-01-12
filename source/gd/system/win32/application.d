@@ -74,11 +74,22 @@ class Win32Application : Application {
 	}
 
 	override void processEvents(bool wait = true) {
-		MSG msg;
-		GetMessage(&msg, null, 0, 0);
-		// TODO: do we check for resizing here to avoid resize blocks?
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (wait)
+			WaitMessage();
+
+		while (true) {
+			MSG msg;
+			auto read = PeekMessage(&msg, null, 0, 0, PM_REMOVE);
+			if (!read)
+				break;
+			// TODO: do we check for resizing here to avoid resize blocks?
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		if (m_display) m_display.processEvents();
+		if (m_timer) m_timer.processEvents();
+		if (m_socketManager) m_socketManager.processEvents();
 	}
 
 }
