@@ -384,7 +384,7 @@ private:
 			// done processing and avoid getting overwhelmed
 			protocols ~= display.atom!"_NET_WM_SYNC_REQUEST";
 			changeProperty(
-				display.atom!("_NET_WM_SYNC_REQUEST_COUNTER", No.create),
+				display.atom!("_NET_WM_SYNC_REQUEST_COUNTER", Yes.create),
 				display.atom!("CARDINAL", No.create),
 				[cast(uint) xsyncCounter],
 			);
