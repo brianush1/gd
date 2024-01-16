@@ -167,6 +167,29 @@ struct TFrame3(T) {
 	/// ditto
 	TFrame3!T translate(T x, T y, T z) const => translate(TVec3!T(x, y, z));
 
+	static if (isFloatingPoint!T) {
+		/++
+
+		Returns a $(D TFrame3) where each axis is guaranteed to be normalized and perpendicular to one another. 
+
+		Will be normalized to the right axis, then the up axis, then the forward axis.
+
+		+/
+		TFrame3!T orthonormalize() const {
+			TVec3!T r = right;
+			T rDotr = r.dot(r);
+			TVec3!T u = up - up.dot(r) / rDotr * r;
+			T uDotu = up.dot(up);
+			TVec3!T f = forward - forward.dot(r) / rDotr * r - forward.dot(u) / uDotu * u;
+			return TFrame3!T(
+				position,
+				r.normalize(),
+				u.normalize(),
+				f.normalize(),
+			);
+		}
+	}
+
 // conversions:
 
 	static if (isFloatingPoint!T) {
