@@ -4,6 +4,7 @@ public import gd.math.frame2;
 public import gd.math.frame3;
 public import gd.math.mat3;
 public import gd.math.mat4;
+public import gd.math.padding;
 public import gd.math.rect;
 public import gd.math.util;
 public import gd.math.vec2;
