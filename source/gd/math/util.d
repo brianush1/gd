@@ -106,7 +106,7 @@ private V genericSlerp(V, T, V arb1, V arb2)(V from, V to, T alpha) {
 	// vectors going in opposite directions
 	else if (dot < -1 + 1e-9) {
 		// pick an arbitrary point to go through
-		TVec3!T arb = arb1;
+		V arb = arb1;
 
 		// if the point we picked wasn't good either, just pick a new one
 		// this one is guaranteed to not be parallel with either `from` or `to`

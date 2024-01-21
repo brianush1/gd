@@ -264,6 +264,17 @@ struct TFrame3(T) {
 
 			return result;
 		}
+
+		/++ Perform a spherical interpolation +/
+		/++ Adds a vector directly to the translation component of this transformation. +/
+		TFrame3!R slerp(R)(TFrame3!R target, R alpha) {
+			import gd.math.util : mix, slerp;
+			TFrame3!R result;
+			result.position = mix(position, target.position, alpha);
+			return result * fromQuaternion(
+				slerp(toQuaternion, target.toQuaternion, alpha)
+			);
+		}
 	}
 
 	string toString() const {
