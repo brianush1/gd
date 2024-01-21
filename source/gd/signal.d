@@ -9,10 +9,11 @@ struct Signal(T...) {
 
 	private {
 		struct Connection {
+			Slot slot;
 			Handler!T handler;
 		}
 
-		Connection[Slot] connections;
+		Connection[] connections;
 		Signal!()* m_onConnect;
 		Signal!()* m_onFullDisconnect;
 	}
@@ -38,24 +39,22 @@ struct Signal(T...) {
 	}
 
 	Slot connect(Handler!T handler) {
-		Slot id;
-		do {
-			id = randomUUID();
-		}
-		while (id in connections); // it's HIGHLY unlikely that we have a collision
-		// but why risk it?
+		Slot id = randomUUID();
 
 		if (connections.length == 0 && m_onConnect != null) {
 			m_onConnect.emit();
 		}
 
-		connections[id] = Connection(handler);
+		connections ~= Connection(id, handler);
 		return id;
 	}
 
 	void disconnect(Slot id) {
-		if (id in connections) {
-			connections.remove(id);
+		import std.algorithm : remove, countUntil;
+
+		ptrdiff_t index = connections.countUntil!(x => x.slot == id);
+		if (index != -1) {
+			connections = connections.remove(index);
 		}
 
 		if (connections.length == 0 && m_onFullDisconnect != null) {
@@ -74,10 +73,9 @@ struct Signal(T...) {
 	}
 
 	void emit(T args) const {
-		import std.array : array;
 		import gd.threading : spawnTask;
 
-		foreach (connection; connections.byValue.array) {
+		foreach (connection; connections.dup) {
 			spawnTask({
 				connection.handler(args);
 			});
