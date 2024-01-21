@@ -713,7 +713,7 @@ private:
 
 			if (len) {
 				// don't deliver control characters
-				if (len == 1 && buffer[0] < 0x20)
+				if (len == 1 && (buffer[0] < 0x20 || buffer[0] == 127))
 					goto case;
 
 				onTextInput.emit(buffer[0 .. len].idup);
