@@ -9,6 +9,7 @@ import gd.graphics.color;
 import gd.math;
 import gd.cursor : Cursors;
 import gd.resource;
+import gd.keycode;
 import std.typecons;
 import std.exception;
 
@@ -250,6 +251,23 @@ public:
 		X11.freePixmap(native, pixmap);
 
 		return result;
+	}
+
+	override Modifiers getCurrentModifiers() {
+		X11.XkbStateRec kbState;
+		X11.kbGetState(native, X11.XkbUseCoreKbd, &kbState);
+
+		Modifiers mods;
+		if (kbState.mods & X11.ShiftMask) mods |= Modifiers.Shift;
+		if (kbState.mods & X11.LockMask) mods |= Modifiers.CapsLock;
+		if (kbState.mods & X11.ControlMask) mods |= Modifiers.Ctrl;
+		if (kbState.mods & X11.Mod1Mask) mods |= Modifiers.Alt;
+		if (kbState.mods & X11.Mod2Mask) mods |= Modifiers.NumLock;
+		if (kbState.mods & X11.Mod3Mask) mods |= Modifiers.ScrollLock;
+		if (kbState.mods & X11.Mod4Mask) mods |= Modifiers.Super;
+		if (kbState.mods & X11.Mod5Mask) mods |= Modifiers.AltGr;
+
+		return mods;
 	}
 
 	private bool[X11Window] activeWindows;
