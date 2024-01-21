@@ -100,11 +100,16 @@ abstract class Window : Resource {
 	Signal!Pointer onPointerAdd;
 	Signal!KeyInfo onKeyPress;
 	Signal!KeyInfo onKeyRelease;
-	Signal!() onFocusEnter; // TODO: implement these 2 on Linux
+	Signal!() onFocusEnter;
 	Signal!() onFocusLeave;
 	Signal!(uint, Vec2) onTouchStart;
 	Signal!(uint, Vec2) onTouchMove;
 	Signal!(uint) onTouchEnd;
+
+	Signal!() onCompositionStart;
+	Signal!(string) onCompositionUpdate;
+	Signal!() onCompositionEnd;
+	Signal!(string) onTextInput;
 
 	Signal!IVec2 onSizeChange;
 	Signal!WindowState onStateChange;
@@ -128,6 +133,9 @@ abstract class Window : Resource {
 	abstract void setIcon(IVec2 size, const(uint)[] data);
 	abstract void setPaintHandler(PaintHandler handler);
 	abstract void invalidate(IRect region);
+
+	abstract void setIMEFocus(bool focus);
+	abstract void setIMECursorPosition(IVec2 position);
 
 	abstract void makeContextCurrent();
 

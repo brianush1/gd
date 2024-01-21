@@ -248,6 +248,9 @@ private:
 
 	immutable(XSync.XSyncCounter) xsyncCounter = X11.None;
 
+	X11.XIC ic;
+	package X11.Window imeWindow;
+
 	X11MousePointer[] m_pointers;
 
 	package this(X11Display display, WindowInitOptions options) {
@@ -416,11 +419,109 @@ private:
 		X11.sync(display.native, X11.False);
 
 		updateEventMask();
+
+		initializeIME();
 	}
 
 	protected override void disposeImpl() {
+		if (ic) X11.destroyIC(ic);
+		if (imeWindow) X11.destroyWindow(display.native, imeWindow);
 		if (createdXWindow) X11.destroyWindow(display.native, native);
 		if (xsyncCounter != X11.None) XSync.destroyCounter(display.native, xsyncCounter);
+	}
+
+	void initializeIME() {
+		imeWindow = X11.createWindow(display.native, native, 0, 0, 1, 1,
+			0, X11.CopyFromParent, X11.InputOnly,
+			cast(X11.Visual*) X11.CopyFromParent, 0, null);
+
+		X11.selectInput(display.native, imeWindow, X11.KeyPressMask | X11.KeyReleaseMask);
+		X11.mapWindow(display.native, imeWindow);
+
+		extern (C) int preeditStart(X11.XIM xim, X11.XPointer clientData, X11.XPointer callData) {
+			X11Window self = cast(X11Window) clientData;
+
+			self.onCompositionStart.emit();
+
+			return -1;
+		}
+
+		extern (C) int preeditDone(X11.XIM xim, X11.XPointer clientData, X11.XPointer callData) {
+			X11Window self = cast(X11Window) clientData;
+
+			self.onCompositionEnd.emit();
+
+			return -1;
+		}
+
+		extern (C) void preeditDraw(X11.XIM xim, X11.XPointer clientData, X11.XIMPreeditDrawCallbackStruct* callData) {
+			import std.conv : to;
+
+			X11Window self = cast(X11Window) clientData;
+
+			X11.XIMText* xim_text = callData.text;
+
+			string str;
+
+			if (xim_text != null) {
+				if (xim_text.encoding_is_wchar) {
+					import core.stdc.stddef : wchar_t;
+					import std.utf : stride;
+
+					wchar_t* c = xim_text.string.wide_char;
+
+					size_t shortLength = 0;
+					foreach (i; 0 .. xim_text.length)
+						shortLength += stride(c[shortLength .. shortLength + 1], 0);
+
+					str = c[0 .. shortLength].to!string;
+				}
+				else {
+					import std.utf : stride;
+
+					char* c = xim_text.string.multi_byte;
+
+					size_t byteLength = 0;
+					foreach (i; 0 .. xim_text.length)
+						byteLength += stride(c[byteLength .. byteLength + 1], 0);
+
+					str = c[0 .. byteLength].idup;
+				}
+			}
+
+			self.onCompositionUpdate.emit(str);
+
+			debug { import std.stdio : writefln; try { writefln!
+				"length: %d, first: %d, caret: %d"(callData.chg_length, callData.chg_first, callData.caret); } catch (Exception) {} }
+		}
+
+		extern (C) void preeditCaret(X11.XIM xim, X11.XPointer clientData, X11.XIMPreeditCaretCallbackStruct* callData) {
+			// TODO: handle this
+		}
+
+		X11.XIMCallback drawCallback = X11.XIMCallback(cast(X11.XPointer) this, cast(X11.XIMProc) &preeditDraw);
+		X11.XIMCallback startCallback = X11.XIMCallback(cast(X11.XPointer) this, cast(X11.XIMProc) &preeditStart);
+		X11.XIMCallback doneCallback = X11.XIMCallback(cast(X11.XPointer) this, cast(X11.XIMProc) &preeditDone);
+		X11.XIMCallback caretCallback = X11.XIMCallback(cast(X11.XPointer) this, cast(X11.XIMProc) &preeditCaret);
+		X11.XVaNestedList preeditAttributes = X11.vaCreateNestedList()(0,
+			cast(const(char)*) X11.XNPreeditStartCallback, &startCallback,
+			cast(const(char)*) X11.XNPreeditDoneCallback, &doneCallback,
+			cast(const(char)*) X11.XNPreeditDrawCallback, &drawCallback,
+			cast(const(char)*) X11.XNPreeditCaretCallback, &caretCallback,
+			null,
+		);
+
+		ic = X11.createIC()(display.xim,
+			cast(const(char)*) X11.XNInputStyle, X11.XIMPreeditCallbacks | X11.XIMStatusNothing,
+			cast(const(char)*) X11.XNClientWindow, imeWindow,
+			cast(const(char)*) X11.XNFocusWindow, imeWindow,
+			cast(const(char)*) X11.XNPreeditAttributes, preeditAttributes,
+			null,
+		);
+
+		debug { import std.stdio : writeln; try { writeln("ic ", ic); } catch (Exception) {} }
+
+		X11.unsetICFocus(ic);
 	}
 
 	void changeProperty(T)(X11.Atom name, X11.Atom type, const(T)[] data, int mode = X11.PropModeReplace)
@@ -477,8 +578,6 @@ private:
 			| X11.FocusChangeMask
 			| X11.StructureNotifyMask
 			| X11.VisibilityChangeMask
-			| X11.KeyPressMask
-			| X11.KeyReleaseMask
 		;
 
 		if (XI2 is null) {
@@ -597,7 +696,35 @@ private:
 			}
 
 			break;
+		case X11.FocusIn:
+			onFocusEnter.emit();
+
+			X11.setInputFocus(display.native, imeWindow, X11.RevertToParent, X11.CurrentTime);
+
+			break;
+		case X11.FocusOut:
+			onFocusLeave.emit();
+			break;
 		case X11.KeyPress:
+			char[16] smallBuffer;
+			char[] buffer = smallBuffer[];
+			X11.KeySym keySym;
+			X11.Status status;
+			int len = X11.utf8LookupString(ic, &ev.xkey, buffer.ptr, cast(int) buffer.length - 1, &keySym, &status);
+			if (status == X11.XBufferOverflow) {
+				buffer = new char[](len + 1);
+				len = X11.mbLookupString(ic, &ev.xkey, buffer.ptr, len, &keySym, &status);
+			}
+
+			if (len) {
+				// don't deliver control characters
+				if (len == 1 && buffer[0] < 0x20)
+					goto case;
+
+				onTextInput.emit(buffer[0 .. len].idup);
+			}
+
+			goto case;
 		case X11.KeyRelease:
 			import gd.system.x11.keycode : keySymToKeyCode;
 			import std.algorithm : countUntil;
@@ -609,6 +736,9 @@ private:
 			while ((currentKey = X11.lookupKeysym(&ev.xkey, keyIndex++)) != X11.NoSymbol) {
 				keys.assumeSafeAppend ~= currentKey;
 			}
+
+			if (keys.length == 0)
+				break;
 
 			Modifiers mods;
 			if (ev.xkey.state & X11.ShiftMask) mods |= Modifiers.Shift;
@@ -830,6 +960,19 @@ public:
 		else {
 			display.invalidationQueue[this] = region;
 		}
+	}
+
+	override void setIMEFocus(bool focus) {
+		if (focus) {
+			X11.setICFocus(ic);
+		}
+		else {
+			X11.unsetICFocus(ic);
+		}
+	}
+
+	override void setIMECursorPosition(IVec2 position) {
+		X11.moveWindow(display.native, imeWindow, position.x, position.y);
 	}
 
 	override void makeContextCurrent() {

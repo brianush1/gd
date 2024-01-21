@@ -57,6 +57,8 @@ private:
 		X11DeviceManager deviceManager;
 
 		X11Cursor[Cursors] systemCursorMap;
+
+		X11.XIM xim;
 	}
 
 	package(gd.system) IRect[X11Window] invalidationQueue;
@@ -65,6 +67,10 @@ private:
 		scope (failure) dispose();
 
 		addDependency(application);
+
+		import core.stdc.locale : setlocale, LC_CTYPE;
+		setlocale(LC_CTYPE, "");
+		X11.setLocaleModifiers("");
 
 		m_native = X11.openDisplay(null);
 		enforce!X11Exception(m_native != null, "could not open X11 display");
@@ -75,6 +81,20 @@ private:
 
 		deviceManager = new X11DeviceManager(this);
 
+		loadSystemCursors();
+		openXIM();
+	}
+
+	protected override void disposeImpl() {
+		// TODO: figure out how to free gl context
+		if (native) X11.closeDisplay(native);
+	}
+
+	void openXIM() {
+		xim = X11.openIM(native, null, null, null);
+	}
+
+	void loadSystemCursors() {
 		loadSystemCursor(Cursors.Arrow, "default");
 		loadSystemCursor(Cursors.ArrowLeft, "left_ptr");
 		loadSystemCursor(Cursors.ArrowCenter, "center_ptr");
@@ -129,11 +149,6 @@ private:
 		X11.freePixmap(native, pixmap);
 	}
 
-	protected override void disposeImpl() {
-		// TODO: figure out how to free gl context
-		if (native) X11.closeDisplay(native);
-	}
-
 	void loadSystemCursor(Cursors cursor, const(char)* name) {
 		X11.Cursor xcursor = XCursor.libraryLoadCursor(native, name);
 		if (xcursor != X11.None)
@@ -159,6 +174,7 @@ public:
 	override X11Window createWindow(WindowInitOptions options) {
 		X11Window window = new X11Window(this, options);
 		windowMap[window.native] = window;
+		windowMap[window.imeWindow] = window;
 
 		window.onStateChange.connect((WindowState state) {
 			if (state & WindowState.Visible) {
@@ -264,13 +280,15 @@ public:
 		while (X11.pending(native)) {
 			X11.XEvent ev;
 			X11.nextEvent(native, &ev);
+			if (X11.filterEvent(&ev, X11.None))
+				continue;
 
 			if (deviceManager.processEvent(ev)) {}
 			else if (X11Window* window = ev.xany.window in windowMap) {
 				window.processEvent(&ev);
 
 				if (ev.type == X11.DestroyNotify) {
-					windowMap.remove(window.native);
+					windowMap.remove(ev.xany.window);
 				}
 			}
 		}
