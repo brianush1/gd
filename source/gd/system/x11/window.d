@@ -490,9 +490,6 @@ private:
 			}
 
 			self.onCompositionUpdate.emit(str);
-
-			debug { import std.stdio : writefln; try { writefln!
-				"length: %d, first: %d, caret: %d"(callData.chg_length, callData.chg_first, callData.caret); } catch (Exception) {} }
 		}
 
 		extern (C) void preeditCaret(X11.XIM xim, X11.XPointer clientData, X11.XIMPreeditCaretCallbackStruct* callData) {
@@ -518,8 +515,6 @@ private:
 			cast(const(char)*) X11.XNPreeditAttributes, preeditAttributes,
 			null,
 		);
-
-		debug { import std.stdio : writeln; try { writeln("ic ", ic); } catch (Exception) {} }
 
 		X11.unsetICFocus(ic);
 	}
