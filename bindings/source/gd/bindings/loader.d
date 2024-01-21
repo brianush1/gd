@@ -117,6 +117,12 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 				static if (
 					is(typeof(__traits(getMember, LibraryType, member)) == function)
 				) {
+					alias ReturnType = imported!"std.traits".ReturnType!(__traits(getMember, LibraryType, member));
+					static if (imported!"std.traits".isSomeFunction!ReturnType)
+						enum isVariadic = imported!"std.traits".variadicFunctionStyle!ReturnType
+							== imported!"std.traits".Variadic.c;
+					else
+						enum isVariadic = false;
 					write("static if (is(typeof(LibraryType.");
 					write(member);
 					write(") P");
@@ -126,11 +132,19 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 					write(") R");
 					write(member);
 					write(" == return)) {
-						private R");
-					write(member);
-					write(" function(P");
-					write(member);
-					write(") nothrow _impl");
+						private ");
+					static if (isVariadic) {
+						write("R");
+						write(member);
+					}
+					else {
+						write("R");
+						write(member);
+						write(" function(P");
+						write(member);
+						write(") nothrow");
+					}
+					write(" _impl");
 					write(member);
 					write(";
 					override R");
@@ -146,15 +160,15 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 						assert(dls, \"library closed\");
 						if (fun is null) {
 							alias bindingNameTuple = __traits(getAttributes, __traits(getOverloads, LibraryType, \"");
-				write(member);
-				write("\")[0]);
+					write(member);
+					write("\")[0]);
 							static if (bindingNameTuple.length > 0) {
 								enum string libraryName = bindingNameTuple[0].name;
 							}
 							else {
 								enum string libraryName = toLibraryName(\"");
-				write(member);
-				write("\");
+					write(member);
+					write("\");
 							}
 
 							*cast(void**)&fun = getProcAddress(libraryName);
@@ -162,10 +176,14 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 
 						assert(fun !is null, \"error when loading member ");
 					write(member);
-					write("\");
-						return fun(args);
+					write("\");");
+					static if (isVariadic) {
+						write("return fun;");
 					}
-					}");
+					else {
+						write("return fun(args);");
+					}
+					write("}}");
 				}
 			}}
 

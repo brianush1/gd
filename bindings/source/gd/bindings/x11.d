@@ -6665,15 +6665,15 @@ extern (System) @nogc nothrow:
 
 	int closeIM(XIM);
 
-	// char* getIMValues(XIM, ...);
+	char* function(XIM, ...) getIMValues();
 
-	// char* setIMValues(XIM, ...);
+	char* function(XIM, ...) setIMValues();
 
 	Display* displayOfIM(XIM);
 
 	char* localeOfIM(XIM);
 
-	// XIC createIC(XIM, ...);
+	XIC function(XIM, ...) createIC();
 
 	void destroyIC(XIC);
 
@@ -6689,9 +6689,9 @@ extern (System) @nogc nothrow:
 	@BindingName("Xutf8ResetIC")
 	char* utf8ResetIC(XIC);
 
-	// char* setICValues(XIC, ...);
+	char* function(XIC, ...) setICValues();
 
-	// char* getICValues(XIC, ...);
+	char* function(XIC, ...) getICValues();
 
 	@BindingName("XIMOfIC")
 	XIM imOfIC(XIC);
@@ -6707,7 +6707,7 @@ extern (System) @nogc nothrow:
 	@BindingName("Xutf8LookupString")
 	int utf8LookupString(XIC, XKeyPressedEvent*, char*, int, KeySym*, int*);
 
-	// XVaNestedList vaCreateNestedList(int, ...);
+	XVaNestedList function(int, ...) vaCreateNestedList();
 
 	int registerIMInstantiateCallback(Display*, PrivateXrmHashBucketRec*,
 			char*, char*, XIDProc, XPointer);
