@@ -508,13 +508,23 @@ private:
 			null,
 		);
 
-		ic = X11.createIC()(display.xim,
-			cast(const(char)*) X11.XNInputStyle, X11.XIMPreeditCallbacks | X11.XIMStatusNothing,
-			cast(const(char)*) X11.XNClientWindow, imeWindow,
-			cast(const(char)*) X11.XNFocusWindow, imeWindow,
-			cast(const(char)*) X11.XNPreeditAttributes, preeditAttributes,
-			null,
-		);
+		foreach (inputStyle; [
+			X11.XIMPreeditCallbacks | X11.XIMStatusNothing,
+			X11.XIMPreeditNothing | X11.XIMStatusNothing,
+			X11.XIMPreeditNone | X11.XIMStatusNone,
+		]) {
+			ic = X11.createIC()(display.xim,
+				cast(const(char)*) X11.XNInputStyle, inputStyle,
+				cast(const(char)*) X11.XNClientWindow, imeWindow,
+				cast(const(char)*) X11.XNFocusWindow, imeWindow,
+				cast(const(char)*) X11.XNPreeditAttributes, preeditAttributes,
+				null,
+			);
+			if (ic)
+				break;
+		}
+
+		assert(ic);
 
 		X11.unsetICFocus(ic);
 	}
