@@ -524,9 +524,8 @@ private:
 				break;
 		}
 
-		assert(ic);
-
-		X11.unsetICFocus(ic);
+		if (ic)
+			X11.unsetICFocus(ic);
 	}
 
 	void changeProperty(T)(X11.Atom name, X11.Atom type, const(T)[] data, int mode = X11.PropModeReplace)
@@ -713,12 +712,20 @@ private:
 		case X11.KeyPress:
 			char[16] smallBuffer;
 			char[] buffer = smallBuffer[];
-			X11.KeySym keySym;
-			X11.Status status;
-			int len = X11.utf8LookupString(ic, &ev.xkey, buffer.ptr, cast(int) buffer.length - 1, &keySym, &status);
-			if (status == X11.XBufferOverflow) {
-				buffer = new char[](len + 1);
-				len = X11.mbLookupString(ic, &ev.xkey, buffer.ptr, len, &keySym, &status);
+			int len;
+
+			if (ic) {
+				X11.KeySym keySym;
+				X11.Status status;
+				len = X11.utf8LookupString(ic, &ev.xkey, buffer.ptr, cast(int) buffer.length - 1, &keySym, &status);
+				if (status == X11.XBufferOverflow) {
+					buffer = new char[](len + 1);
+					len = X11.mbLookupString(ic, &ev.xkey, buffer.ptr, len, &keySym, &status);
+				}
+			}
+			else { // fallback in case XIM fails to initialize
+				X11.KeySym keySym;
+				len = X11.lookupString(&ev.xkey, buffer.ptr, cast(int) buffer.length - 1, &keySym, null);
 			}
 
 			if (len) {
@@ -968,6 +975,9 @@ public:
 	}
 
 	override void setIMEFocus(bool focus) {
+		if (!ic)
+			return;
+
 		if (focus) {
 			X11.setICFocus(ic);
 		}
