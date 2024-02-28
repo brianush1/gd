@@ -1020,14 +1020,14 @@ public:
 
 		X11.XTextProperty windowName;
 		windowName.value = cast(ubyte*) m_title.ptr;
-		windowName.encoding = display.atom!("UTF8_STRING", No.create);
+		windowName.encoding = display.atom!("UTF8_STRING", Yes.create);
 		windowName.format = 8;
 		windowName.nitems = cast(uint) m_title.length;
 		X11.setWMName(display.native, native, &windowName);
 
 		changeProperty(
-			display.atom!("_NET_WM_NAME", No.create),
-			display.atom!("UTF8_STRING", No.create),
+			display.atom!("_NET_WM_NAME", Yes.create),
+			display.atom!("UTF8_STRING", Yes.create),
 			cast(const(ubyte)[]) m_title,
 		);
 
