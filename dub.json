@@ -20,10 +20,10 @@
 				"windows"
 			],
 			"libs": [
-				"User32",
-				"Gdi32",
+				"user32",
+				"gdi32",
 				"opengl32",
-				"Ws2_32"
+				"ws2_32"
 			],
 			"targetType": "library",
 			"versions": [

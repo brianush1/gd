@@ -316,6 +316,14 @@ public:
 		}
 	}
 
+	override void setIMEFocus(bool focus) {
+		// TODO: implement
+	}
+
+	override void setIMECursorPosition(IVec2 position) {
+		// TODO: implement
+	}
+
 	override void makeContextCurrent() {
 		wglMakeCurrent(hdc, wglContext);
 	}
@@ -562,15 +570,7 @@ private LRESULT wndProcD(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 
 		keyInfo.logical = vkeyToKeyCode(vk);
 		keyInfo.physical = vkeyToKeyCode(MapVirtualKeyEx(scancode, MAPVK_VSC_TO_VK_EX, self.display.qwerty));
-
-		if (GetKeyState(VK_CONTROL) & 0x8000) keyInfo.mods |= Modifiers.Ctrl;
-		if (GetKeyState(VK_SHIFT) & 0x8000) keyInfo.mods |= Modifiers.Shift;
-		if (GetKeyState(VK_MENU) & 0x8000) keyInfo.mods |= Modifiers.Alt;
-		if ((GetKeyState(VK_LWIN) & 0x8000) || (GetKeyState(VK_RWIN) & 0x8000)) keyInfo.mods |= Modifiers.Super;
-		// TODO: AltGr
-		if (GetKeyState(VK_NUMLOCK) & 1) keyInfo.mods |= Modifiers.NumLock;
-		if (GetKeyState(VK_SCROLL) & 1) keyInfo.mods |= Modifiers.ScrollLock;
-		if (GetKeyState(VK_CAPITAL) & 1) keyInfo.mods |= Modifiers.CapsLock;
+		keyInfo.mods = self.display.getCurrentModifiers();
 
 		if (Msg == WM_KEYDOWN || Msg == WM_SYSKEYDOWN)
 			self.onKeyPress.emit(keyInfo);

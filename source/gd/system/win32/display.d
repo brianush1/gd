@@ -5,6 +5,7 @@ import gd.system.application;
 import gd.system.display;
 import gd.system.window;
 import gd.cursor : Cursors;
+import gd.keycode;
 import gd.math;
 import std.datetime;
 import std.typecons;
@@ -268,6 +269,21 @@ class Win32Display : Display {
 			throw new Win32Exception("CreateCursor", GetLastError());
 
 		return new Win32Cursor(this, hCursor, true);
+	}
+
+	override Modifiers getCurrentModifiers() {
+		Modifiers mods;
+
+		if (GetKeyState(VK_CONTROL) & 0x8000) mods |= Modifiers.Ctrl;
+		if (GetKeyState(VK_SHIFT) & 0x8000) mods |= Modifiers.Shift;
+		if (GetKeyState(VK_MENU) & 0x8000) mods |= Modifiers.Alt;
+		if ((GetKeyState(VK_LWIN) & 0x8000) || (GetKeyState(VK_RWIN) & 0x8000)) mods |= Modifiers.Super;
+		// TODO: AltGr
+		if (GetKeyState(VK_NUMLOCK) & 1) mods |= Modifiers.NumLock;
+		if (GetKeyState(VK_SCROLL) & 1) mods |= Modifiers.ScrollLock;
+		if (GetKeyState(VK_CAPITAL) & 1) mods |= Modifiers.CapsLock;
+
+		return mods;
 	}
 
 	private bool[Win32Window] activeWindows;
