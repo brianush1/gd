@@ -408,7 +408,7 @@ class Win32Socket : Socket {
 
 			if (ev & FD_READ) {
 				while (true) {
-					ubyte[1024] buffer;
+					ubyte[4096] buffer;
 					Address addr;
 					int received;
 					final switch (family) {

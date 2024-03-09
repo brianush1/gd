@@ -347,7 +347,7 @@ class LinuxSocket : Socket {
 				}
 				else {
 					while (true) {
-						ubyte[1024] buffer;
+						ubyte[4096] buffer;
 						Address addr;
 						ssize_t received;
 						final switch (family) {
