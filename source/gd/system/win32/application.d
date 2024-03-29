@@ -59,7 +59,10 @@ class Win32Application : Application {
 		return m_socketManager;
 	}
 
+	private bool deactivated = false;
+
 	override bool isActive() {
+		if (deactivated) return false;
 		if (m_display && m_display.isActive) return true;
 		if (m_timer && m_timer.isActive) return true;
 		if (m_timer && m_timer.isActive) return true;
@@ -71,6 +74,7 @@ class Win32Application : Application {
 		if (m_display) m_display.deactivate();
 		if (m_timer) m_timer.deactivate();
 		if (m_socketManager) m_socketManager.deactivate();
+		deactivated = true;
 	}
 
 	override void processEvents(bool wait = true) {
