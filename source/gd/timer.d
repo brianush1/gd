@@ -1,5 +1,6 @@
 module gd.timer;
 import gd.system.application;
+import gd.threading;
 import std.datetime;
 import core.thread.fiber;
 
@@ -28,13 +29,13 @@ class Timer {
 
 	static Timer setTimer(Duration delay, void delegate() callback) {
 		Timer result = new Timer;
-		result.id = application.timer.setTimer(delay, callback);
+		result.id = application.timer.setTimer(delay, { spawnTask(callback); });
 		return result;
 	}
 
 	static Timer setInterval(Duration delay, void delegate() callback) {
 		Timer result = new Timer;
-		result.id = application.timer.setInterval(delay, callback);
+		result.id = application.timer.setInterval(delay, { spawnTask(callback); });
 		return result;
 	}
 
