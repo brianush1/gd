@@ -237,6 +237,9 @@ class Win32Socket : Socket {
 		this.family = family;
 		this.protocol = protocol;
 
+		int zero = 0;
+		setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, cast(void*) &zero, zero.sizeof);
+
 		socketManager.socketsByFd[fd] = this;
 
 		listenToEvents();
@@ -284,7 +287,9 @@ class Win32Socket : Socket {
 		return result;
 	}
 
+	private bool isDualStack = false;
 	override void bind(Address address) {
+		isDualStack = address.family == AddressFamily.IPv6;
 		auto addr = convertAddress(address);
 		int res = addr.match!((x) => .bind(fd, cast(sockaddr*)&x, typeof(x).sizeof));
 		if (res != 0) {
@@ -303,6 +308,8 @@ class Win32Socket : Socket {
 	}
 
 	override void connect(Address address) {
+		if (isDualStack)
+			address = address.asIPv6;
 		auto addr = convertAddress(address);
 
 		// sometimes messages can arrive immediately after we connect, despite
@@ -395,7 +402,7 @@ class Win32Socket : Socket {
 						else {
 							// TODO: how would we properly handle an error here?
 							import std.stdio : writeln;
-							writeln("error: ", errno);
+							writeln("accept error: ", errno);
 							break;
 						}
 					}
@@ -436,7 +443,7 @@ class Win32Socket : Socket {
 						else {
 							// TODO: how do we handle an error here
 							import std.stdio : writeln;
-							writeln("error: ", errno);
+							writeln("read error: ", errno);
 							continue;
 						}
 					}
@@ -471,6 +478,8 @@ class Win32Socket : Socket {
 	}
 
 	override size_t sendTo(Address address, const(void)[] buffer) {
+		if (isDualStack)
+			address = address.asIPv6;
 		auto addr = convertAddress(address);
 		int res = addr.match!((x) => .sendto(fd, buffer.ptr, cast(int) buffer.length, 0,
 			cast(sockaddr*)&x, typeof(x).sizeof));

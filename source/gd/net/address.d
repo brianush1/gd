@@ -43,6 +43,17 @@ struct Address {
 		return result;
 	}
 
+	Address asIPv6() {
+		if (family == AddressFamily.IPv4) {
+			ubyte[16] ip = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0];
+			ip[12 .. 16] = m_address[0 .. 4];
+			return createIPv6(ip, m_port, m_scopeId);
+		}
+		else {
+			return this;
+		}
+	}
+
 	string toString() const {
 		import std.string : format;
 
