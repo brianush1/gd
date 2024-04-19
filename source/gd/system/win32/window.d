@@ -635,6 +635,10 @@ private LRESULT wndProcD(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 			self.onTextInput.emit([self.prevHighSurrogate, ch].to!string);
 		}
 		else {
+			// don't deliver control characters
+			if (ch < 0x20 || ch == 127)
+				break;
+
 			self.onTextInput.emit(ch.to!string);
 		}
 
