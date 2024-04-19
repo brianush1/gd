@@ -151,6 +151,7 @@ private int epollFlags(SocketProtocol protocol) {
 	case SocketProtocol.TCP:
 		return 0
 			| EPOLLIN
+			| EPOLLOUT
 			| EPOLLRDHUP
 			| EPOLLPRI
 			| EPOLLERR
@@ -159,6 +160,7 @@ private int epollFlags(SocketProtocol protocol) {
 	case SocketProtocol.UDP:
 		return 0
 			| EPOLLIN
+			| EPOLLOUT
 			| EPOLLERR
 			// | EPOLLET
 		;
@@ -310,6 +312,10 @@ class LinuxSocket : Socket {
 		}
 	}
 
+	private bool m_readAutomatically = true;
+	override bool readAutomatically() const @property => m_readAutomatically;
+	override void readAutomatically(bool value) @property { m_readAutomatically = value; }
+
 	private bool suspendListening = false;
 	private void listenToEvents() {
 		onEpollEvents.connect((int ev) {
@@ -318,6 +324,10 @@ class LinuxSocket : Socket {
 
 			if (ev & (EPOLLPRI | EPOLLERR)) {
 				// TODO: how to handle errors
+			}
+
+			if (ev & EPOLLOUT) {
+				onWriteAvailable.emit();
 			}
 
 			if (ev & EPOLLIN) {
@@ -346,7 +356,8 @@ class LinuxSocket : Socket {
 					}
 				}
 				else {
-					while (true) {
+					onReadAvailable.emit();
+					while (m_readAutomatically) {
 						ubyte[4096] buffer;
 						Address addr;
 						ssize_t received;

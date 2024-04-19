@@ -31,6 +31,9 @@ abstract class Socket : Resource {
 	+/
 	Signal!(Address, ubyte[]) onReceive;
 
+	Signal!() onWriteAvailable;
+	Signal!() onReadAvailable;
+
 	Signal!Socket onAccept;
 
 	abstract void bind(Address address);
@@ -38,5 +41,9 @@ abstract class Socket : Resource {
 	abstract void connect(Address address);
 	abstract size_t send(const(void)[] buffer);
 	abstract size_t sendTo(Address address, const(void)[] buffer);
+
+	/++ Determines if data will automatically be read off the socket, and onReceive will be called +/
+	abstract bool readAutomatically() const @property;
+	abstract void readAutomatically(bool value) @property;
 
 }

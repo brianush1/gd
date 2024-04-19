@@ -2,6 +2,7 @@ module gd.system.application;
 import gd.system.display;
 import gd.system.timer;
 import gd.system.socket;
+import gd.system.ssl;
 import gd.resource;
 import gd.threading;
 import core.thread;
@@ -13,6 +14,7 @@ abstract class Application : Resource {
 	abstract inout(Display) display() inout @property;
 	abstract inout(Timer) timer() inout @property;
 	abstract inout(SocketManager) socketManager() inout @property;
+	abstract inout(SSLManager) sslManager() inout @property;
 
 	/++
 

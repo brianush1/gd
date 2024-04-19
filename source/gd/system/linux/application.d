@@ -1,6 +1,7 @@
 module gd.system.linux.application;
 import gd.system.linux.socket;
 import gd.system.linux.timer;
+import gd.system.linux.openssl;
 import gd.system.x11.display;
 import gd.system.application;
 import gd.system.display;
@@ -91,6 +92,19 @@ class LinuxApplication : Application {
 	override inout(LinuxSocketManager) socketManager() inout @property {
 		if (!m_socketManager) (cast() this).initSocketManager();
 		return m_socketManager;
+	}
+
+	private {
+		OpenSSLManager m_sslManager;
+
+		void initSSLManager() {
+			m_sslManager = new OpenSSLManager(this);
+		}
+	}
+
+	override inout(OpenSSLManager) sslManager() inout @property {
+		if (!m_sslManager) (cast() this).initSSLManager();
+		return m_sslManager;
 	}
 
 	private bool deactivated = false;

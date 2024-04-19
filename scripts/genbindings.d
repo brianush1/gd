@@ -1,3 +1,4 @@
+#!/bin/env -S rdmd
 module scripts.genbindings;
 
 import std.stdio;
@@ -178,11 +179,6 @@ string generate(Library lib) {
 
 		if (countCaps == 1) {
 			replacement = cast(char)(name[0] - 'A' + 'a') ~ name[1 .. $];
-
-			if (KEYWORDS.canFind(replacement)) {
-				replacement ~= "_";
-				notDefaultReplacement = true;
-			}
 		}
 		else if (countCaps == 0) {
 			replacement = name;
@@ -190,6 +186,11 @@ string generate(Library lib) {
 		}
 		else {
 			replacement = name[0 .. countCaps - 1].map!toLower.to!string ~ name[countCaps - 1 .. $];
+			notDefaultReplacement = true;
+		}
+
+		if (KEYWORDS.canFind(replacement)) {
+			replacement ~= "_";
 			notDefaultReplacement = true;
 		}
 
