@@ -376,6 +376,10 @@ class Win32Socket : Socket {
 		}
 	}
 
+	private bool m_readAutomatically = true;
+	override bool readAutomatically() const @property => m_readAutomatically;
+	override void readAutomatically(bool value) @property { m_readAutomatically = value; }
+
 	private bool suspendListening = false;
 	private void listenToEvents() {
 		// make the socket send non-blocking events
@@ -413,8 +417,13 @@ class Win32Socket : Socket {
 				}
 			}
 
-			if (ev & FD_READ) {
-				while (true) {
+			if (ev & FD_WRITE) {
+				onWriteAvailable.emit();
+			}
+
+			if ((ev & FD_READ) || (ev & FD_CLOSE)) {
+				onReadAvailable.emit();
+				while (m_readAutomatically) {
 					ubyte[4096] buffer;
 					Address addr;
 					int received;

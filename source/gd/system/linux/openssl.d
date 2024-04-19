@@ -5,7 +5,8 @@ import gd.system.ssl;
 import gd.system.application;
 import gd.bindings.loader;
 import gd.bindings.ssl;
-import gd.timer;
+
+version (gd_Linux):
 
 // CRL = Certificate Revocation List
 static immutable string[] sslErrorCodes = [

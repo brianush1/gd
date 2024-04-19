@@ -2,6 +2,7 @@ module gd.system.win32.application;
 import gd.system.win32.display;
 import gd.system.win32.socket;
 import gd.system.win32.timer;
+import gd.system.win32.sslmanager;
 import gd.system.application;
 import gd.system.display;
 import gd.system.socket;
@@ -57,6 +58,19 @@ class Win32Application : Application {
 	override inout(Win32SocketManager) socketManager() inout @property {
 		if (!m_socketManager) (cast() this).initSocketManager();
 		return m_socketManager;
+	}
+
+	private {
+		Win32SSLManager m_sslManager;
+
+		void initSSLManager() {
+			m_sslManager = new Win32SSLManager(this);
+		}
+	}
+
+	override inout(Win32SSLManager) sslManager() inout @property {
+		if (!m_sslManager) (cast() this).initSSLManager();
+		return m_sslManager;
 	}
 
 	private bool deactivated = false;

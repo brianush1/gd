@@ -4,6 +4,8 @@ import gd.resource;
 import core.stdc.config;
 import core.stdc.stddef;
 
+version (gd_Linux):
+
 private static SSLLibrary m_SSL;
 SSLLibrary SSL() @property { // @suppress(dscanner.confusing.function_attributes)
 	if (m_SSL is null) {
