@@ -158,6 +158,8 @@ private:
 	HDC hdc;
 	HGLRC wglContext;
 
+	wchar prevHighSurrogate;
+
 	package this(Win32Display display, WindowInitOptions options) {
 		scope (failure) dispose();
 
@@ -622,6 +624,21 @@ private LRESULT wndProcD(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 		ValidateRect(hwnd, null);
 		self.repaintImmediately();
 		return 0;
+	case WM_CHAR:
+		import std.conv : to;
+
+		wchar ch = cast(wchar) wParam;
+		if (0xD800 <= ch && ch <= 0xDBFF) { // high surrogate
+			self.prevHighSurrogate = ch;
+		}
+		else if (0xDC00 <= ch && ch <= 0xDFFF) { // low surrogate
+			self.onTextInput.emit([self.prevHighSurrogate, ch].to!string);
+		}
+		else {
+			self.onTextInput.emit(ch.to!string);
+		}
+
+		break;
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 	case WM_KEYUP:
