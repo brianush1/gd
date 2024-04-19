@@ -442,6 +442,87 @@ public:
 		}
 	}
 
+	override bool isClipboardAvailable(Clipboard clipboard) {
+		final switch (clipboard) {
+		case Clipboard.Selection:
+			return false;
+		case Clipboard.Clipboard:
+			return true;
+		}
+	}
+
+	override void[] getClipboardData(Clipboard clipboard, string mimeType) {
+		import std.algorithm : countUntil;
+		import std.string : lineSplitter, join;
+		import std.conv : to;
+
+		if (!isClipboardAvailable(clipboard))
+			return [];
+
+		assert(mimeType == "text/plain");
+
+		OpenClipboard(hwnd);
+		scope (exit)
+			CloseClipboard();
+
+		UINT[] formats = [CF_UNICODETEXT, CF_TEXT];
+		int format = GetPriorityClipboardFormat(formats.ptr, cast(int) formats.length);
+
+		void[] fromGlobal(HGLOBAL hMem) {
+			LPVOID ptr = GlobalLock(hMem);
+			SIZE_T size = GlobalSize(hMem);
+			ubyte[] result = new ubyte[size];
+			result[0 .. size] = (cast(const(ubyte)*) ptr)[0 .. size];
+			GlobalUnlock(hMem);
+			return result;
+		}
+
+		switch (format) {
+		case CF_UNICODETEXT:
+			void[] rawData = fromGlobal(GetClipboardData(format));
+			wchar[] data = cast(wchar[]) rawData[0 .. rawData.length / 2 * 2];
+			ptrdiff_t terminator = data.countUntil('\0');
+			if (terminator != -1)
+				data = data[0 .. terminator];
+			return data.to!(char[]).lineSplitter.join("\n");
+		case CF_TEXT:
+			char[] data = cast(char[]) fromGlobal(GetClipboardData(format));
+			ptrdiff_t terminator = data.countUntil('\0');
+			if (terminator != -1)
+				data = data[0 .. terminator];
+			return data.lineSplitter.join("\n");
+		default: // 0 (empty clipboard) or -1 (no supported format on clipboard)
+			return null;
+		}
+	}
+
+	override void setClipboardData(Clipboard clipboard, string mimeType, const(void)[] data) {
+		import std.string : lineSplitter, join;
+		import std.conv : to;
+
+		if (!isClipboardAvailable(clipboard))
+			return;
+
+		assert(mimeType == "text/plain");
+
+		HGLOBAL toGlobal(const(void)[] buf) {
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, buf.length);
+			LPVOID ptr = GlobalLock(hMem);
+			ptr[0 .. buf.length] = buf[0 .. buf.length];
+			GlobalUnlock(hMem);
+			return hMem;
+		}
+
+		string textData = (cast(const(char)[]) data).lineSplitter.join("\r\n").assumeUnique ~ '\0';
+
+		OpenClipboard(hwnd);
+		scope (exit)
+			CloseClipboard();
+		EmptyClipboard();
+		SetClipboardData(CF_TEXT, toGlobal(textData));
+		SetClipboardData(CF_UNICODETEXT, toGlobal(textData.to!wstring));
+	}
+
 }
 
 private {

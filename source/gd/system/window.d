@@ -88,6 +88,11 @@ struct KeyInfo {
 
 }
 
+enum Clipboard {
+	Selection,
+	Clipboard,
+}
+
 abstract class Window : Resource {
 
 	/++ Fired when the user requests to close the window, for example by clicking the close button +/
@@ -147,5 +152,9 @@ abstract class Window : Resource {
 
 	abstract WindowState state() const @property;
 	abstract void state(WindowState value) @property;
+
+	abstract bool isClipboardAvailable(Clipboard clipboard);
+	abstract void[] getClipboardData(Clipboard clipboard, string mimeType);
+	abstract void setClipboardData(Clipboard clipboard, string mimeType, const(void)[] data);
 
 }

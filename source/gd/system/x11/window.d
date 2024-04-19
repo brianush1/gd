@@ -9,6 +9,7 @@ import gd.graphics.color;
 import gd.keycode;
 import gd.cursor : Cursors;
 import gd.math;
+import gd.signal;
 import std.typecons;
 import std.exception;
 
@@ -807,6 +808,17 @@ private:
 			}
 
 			break;
+		case X11.SelectionNotify:
+			onSelectionNotify.emit(ev.xselection);
+			break;
+		case X11.SelectionRequest:
+			X11.Atom selection = ev.xselectionrequest.selection;
+			if (selection in selectionHandlers)
+				selectionHandlers[selection](ev.xselectionrequest);
+			break;
+		case X11.SelectionClear:
+			selectionHandlers.remove(ev.xselectionclear.selection);
+			break;
 		default:
 			break;
 		}
@@ -1144,6 +1156,146 @@ public:
 				X11.mapWindow(display.native, native);
 			}
 		}
+	}
+
+	private Signal!(X11.XSelectionEvent) onSelectionNotify;
+
+	override bool isClipboardAvailable(Clipboard clipboard) {
+		final switch (clipboard) {
+		case Clipboard.Selection:
+		case Clipboard.Clipboard:
+			return true;
+		}
+	}
+
+	private {
+		Signal!() queryClipboardFinished;
+		bool debounceClipboard = false;
+		Tuple!(X11.Time, void[]) queryClipboard(X11.Atom selection, X11.Atom target) {
+			while (debounceClipboard)
+				queryClipboardFinished.wait();
+			debounceClipboard = true;
+			scope (exit) {
+				debounceClipboard = false;
+				queryClipboardFinished.emit();
+			}
+
+			X11.convertSelection(display.native,
+				selection,
+				target,
+				display.atom!"XSEL_DATA",
+				native,
+				X11.CurrentTime,
+			);
+
+			X11.XSelectionEvent ev = onSelectionNotify.wait()[0];
+
+			import core.stdc.config : c_ulong;
+
+			ubyte* data;
+			int format;
+			c_ulong remaining, size;
+			X11.getWindowProperty(ev.display, ev.requestor, ev.property, 0, ~0L, 0,
+				X11.AnyPropertyType, &target, &format, &size, &remaining, &data);
+
+			if (target == display.atom!"UTF8_STRING" || target == display.atom!"STRING") {
+				ubyte[] res = data[0 .. size].dup;
+				X11.free(data);
+				return typeof(return)(ev.time, res);
+			}
+			else {
+				return typeof(return)(ev.time, null);
+			}
+		}
+
+		void delegate(X11.XSelectionRequestEvent)[X11.Atom] selectionHandlers;
+
+		void setSelectionHandler(X11.Atom selection, void delegate(X11.XSelectionRequestEvent) handler) {
+			X11.setSelectionOwner(display.native, selection, native, X11.CurrentTime);
+			selectionHandlers[selection] = handler;
+		}
+	}
+
+	override void[] getClipboardData(Clipboard clipboard, string mimeType) {
+		if (!isClipboardAvailable(clipboard))
+			return [];
+
+		assert(mimeType == "text/plain");
+
+		Tuple!(X11.Time, void[]) clipboardData = queryClipboard(
+			display.atom!"CLIPBOARD",
+			display.atom!"UTF8_STRING",
+		);
+
+		if (clipboard == Clipboard.Clipboard)
+			return clipboardData[1];
+
+		Tuple!(X11.Time, void[]) selectionData = queryClipboard(
+			display.atom!"PRIMARY",
+			display.atom!"UTF8_STRING",
+		);
+
+		if (clipboardData[0] > selectionData[0])
+			return clipboardData[1];
+		else
+			return selectionData[1];
+	}
+
+	override void setClipboardData(Clipboard clipboard, string mimeType, const(void)[] data) {
+		if (!isClipboardAvailable(clipboard))
+			return;
+
+		assert(mimeType == "text/plain");
+
+		void handler(X11.XSelectionRequestEvent rev) {
+			import std.algorithm : canFind;
+
+			X11.XSelectionEvent ev;
+			ev.type = X11.SelectionNotify;
+			ev.display = rev.display;
+			ev.requestor = rev.requestor;
+			ev.selection = rev.selection;
+			ev.time = rev.time;
+			ev.target = rev.target;
+			ev.property = rev.property;
+
+			int ret = 0;
+
+			X11.Atom[] targets = [
+				display.atom!"UTF8_STRING",
+				display.atom!"STRING",
+				display.atom!"TEXT",
+			];
+
+			if (ev.target == display.atom!"TARGETS") {
+				X11.changeProperty(display.native, ev.requestor, ev.property,
+					display.atom!"ATOM",
+					32,
+					X11.PropModeReplace,
+					cast(ubyte*) targets.ptr,
+					cast(int) targets.length,
+				);
+			}
+			else if (targets.canFind(ev.target)) {
+				X11.changeProperty(display.native, ev.requestor, ev.property,
+					ev.target == display.atom!"UTF8_STRING" ? display.atom!"UTF8_STRING" : display.atom!"STRING",
+					8,
+					X11.PropModeReplace,
+					cast(ubyte*) data.ptr,
+					cast(int) data.length,
+				);
+			}
+			else {
+				ev.property = X11.None;
+			}
+
+			if ((ret & 2) == 0)
+				X11.sendEvent(display.native, ev.requestor, 0, 0, cast(X11.XEvent*) &ev);
+		}
+
+		setSelectionHandler(display.atom!"PRIMARY", &handler);
+		if (clipboard == Clipboard.Clipboard)
+			setSelectionHandler(display.atom!"CLIPBOARD", &handler);
 	}
 
 }
