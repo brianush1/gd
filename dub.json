@@ -23,6 +23,8 @@
 				"user32",
 				"gdi32",
 				"opengl32",
+				"Crypt32",
+				"Security",
 				"ws2_32"
 			],
 			"targetType": "library",
