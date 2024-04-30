@@ -352,8 +352,6 @@ private:
 		// sync to ensure any errors generated are processed
 		X11.sync(display.native, X11.False);
 
-		// TODO: allow disabling/enabling vsync
-		// TODO: disable vsync during resize
 		X11Window.makeContextCurrent();
 		GLX.swapIntervalEXT(display.native, native, 1);
 
@@ -1004,6 +1002,13 @@ public:
 
 	override void makeContextCurrent() {
 		GLX.makeCurrent(display.native, native, glxContext);
+	}
+
+	override void setSwapInterval(bool vsync) {
+		if (disposed) return;
+
+		makeContextCurrent();
+		GLX.swapIntervalEXT(display.native, native, vsync ? 1 : 0);
 	}
 
 	package void updateRegion(IRect region) {

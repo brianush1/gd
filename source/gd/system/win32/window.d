@@ -330,6 +330,10 @@ public:
 		wglMakeCurrent(hdc, wglContext);
 	}
 
+	override void setSwapInterval(bool vsync) {
+		// TODO: implement
+	}
+
 	void repaintImmediately() {
 		if (m_paintHandler is null) {
 			return;

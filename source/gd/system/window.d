@@ -142,6 +142,8 @@ abstract class Window : Resource {
 	abstract void setIMEFocus(bool focus);
 	abstract void setIMECursorPosition(IVec2 position);
 
+	abstract void setSwapInterval(bool vsync);
+
 	abstract void makeContextCurrent();
 
 	abstract string title() const @property;
