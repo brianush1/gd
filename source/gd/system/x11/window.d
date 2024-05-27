@@ -347,7 +347,13 @@ private:
 			X11.None,
 		];
 
-		glxContext = GLX.createContextAttribsARB(display.native, fbconfig, null, X11.True, contextAttribs.ptr);
+		GLX.GLXContext shareContext = null;
+		if (options.shareContext !is null) {
+			X11Window shareWindow = cast(X11Window) options.shareContext;
+			enforce!X11Exception(shareWindow !is null, "expected an X11 window as shareContext");
+			shareContext = shareWindow.glxContext;
+		}
+		glxContext = GLX.createContextAttribsARB(display.native, fbconfig, shareContext, X11.True, contextAttribs.ptr);
 
 		// sync to ensure any errors generated are processed
 		X11.sync(display.native, X11.False);
@@ -975,6 +981,11 @@ public:
 		m_paintHandler = handler;
 	}
 
+	private PaintHandler m_postPaintHandler;
+	override void setPostPaintHandler(PaintHandler handler) {
+		m_postPaintHandler = handler;
+	}
+
 	override void invalidate(IRect region) {
 		if (IRect* invalidatedRegion = this in display.invalidationQueue) {
 			*invalidatedRegion = invalidatedRegion.minimalUnion(region);
@@ -1026,6 +1037,9 @@ public:
 		m_paintHandler();
 
 		GLX.swapBuffers(display.native, native);
+
+		if (m_postPaintHandler)
+			m_postPaintHandler();
 	}
 
 	private string m_title;

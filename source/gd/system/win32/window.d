@@ -237,10 +237,18 @@ private:
 			0,
 		];
 
-		wglContext = wglCreateContextAttribsARB(hdc, null, contextAttribs.ptr);
+		HGLRC shareContext = null;
+		if (options.shareContext !is null) {
+			Win32Window shareWindow = cast(Win32Window) options.shareContext;
+			enforce!Win32Exception(shareWindow !is null, "expected a Win32 window as shareContext");
+			shareContext = shareWindow.wglContext;
+		}
+		wglContext = wglCreateContextAttribsARB(hdc, shareContext, contextAttribs.ptr);
 
 		if (wglContext is null)
 			throw new Win32Exception("wglCreateContextAttribsARB", GetLastError());
+
+		makeContextCurrent();
 
 		assert(!(options.initialState & WindowState.Visible),
 			"window cannot be visible on creation, since a paint handler ought to be set when the window is first shown");
@@ -298,6 +306,11 @@ public:
 		m_paintHandler = handler;
 	}
 
+	private PaintHandler m_postPaintHandler;
+	override void setPostPaintHandler(PaintHandler handler) {
+		m_postPaintHandler = handler;
+	}
+
 	package void updateRegion(IRect region) {
 		if (disposed) return;
 
@@ -343,6 +356,9 @@ public:
 		m_paintHandler();
 
 		SwapBuffers(hdc);
+
+		if (m_postPaintHandler)
+			m_postPaintHandler();
 	}
 
 	private string m_title;

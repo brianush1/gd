@@ -12,6 +12,7 @@ struct WindowInitOptions {
 	int depthSize = 16;
 	int glVersionMajor = 3;
 	int glVersionMinor = 0;
+	Window shareContext = null;
 
 	string title = "Window";
 	string className = "window";
@@ -137,6 +138,7 @@ abstract class Window : Resource {
 
 	abstract void setIcon(IVec2 size, const(uint)[] data);
 	abstract void setPaintHandler(PaintHandler handler);
+	abstract void setPostPaintHandler(PaintHandler handler);
 	abstract void invalidate(IRect region);
 
 	abstract void setIMEFocus(bool focus);
