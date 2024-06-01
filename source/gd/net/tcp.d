@@ -107,9 +107,15 @@ class TcpClient {
 
 			ssl.connect();
 			socket.onReadAvailable.connect({
-				ubyte[] buffer = ssl.read();
-				if (buffer.length > 0)
-					onReceive.emit(buffer);
+				while (true) {
+					ubyte[] buffer = ssl.read();
+					if (buffer.length > 0) {
+						onReceive.emit(buffer);
+					}
+					else {
+						break;
+					}
+				}
 			});
 		}
 	}
