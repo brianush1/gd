@@ -506,6 +506,7 @@ class Win32SSLManager : SSLManager {
 	private {
 		HCERTSTORE certStore;
 		PSecurityFunctionTableW sspi;
+		CredHandle hCreds;
 	}
 
 	package(gd.system) this(Application application) {
@@ -520,6 +521,8 @@ class Win32SSLManager : SSLManager {
 		certStore = CertOpenSystemStoreW(0, "MY"w.ptr);
 		if (!certStore)
 			throw new Exception("failed to open system credential store");
+
+		createCredentials(&hCreds);
 	}
 
 	protected override void disposeImpl() {}
@@ -530,7 +533,7 @@ class Win32SSLManager : SSLManager {
 
 		info.verifyPeer = verifyPeer;
 		info.hostname = hostname;
-		createCredentials(&info.hCreds);
+		info.hCreds = hCreds;
 
 		socket.readAutomatically = false;
 
