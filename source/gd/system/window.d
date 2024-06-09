@@ -20,6 +20,7 @@ struct WindowInitOptions {
 	Nullable!IVec2 position; // TODO: implement this on X11
 	IVec2 size = IVec2(800, 600);
 	WindowState initialState = WindowState.None;
+	Window modalFor = null;
 }
 
 enum PointerFlags {
@@ -73,6 +74,7 @@ enum WindowState : uint {
 	Visible    = 0x0008,
 	Attention  = 0x0010,
 	Topmost    = 0x0020,
+	FixedSize  = 0x0040,
 }
 
 alias PaintHandler = void delegate();

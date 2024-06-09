@@ -160,6 +160,9 @@ private:
 
 	wchar prevHighSurrogate;
 
+	bool isModal = false;
+	HWND parentWindow;
+
 	package this(Win32Display display, WindowInitOptions options) {
 		scope (failure) dispose();
 
@@ -167,14 +170,30 @@ private:
 
 		addDependency(display);
 
-		style = WS_OVERLAPPEDWINDOW;
+		if (options.modalFor) {
+			Win32Window modalFor = cast(Win32Window) options.modalFor;
+			enforce!Win32Exception(modalFor !is null, "expected Win32 window as modal target");
 
-		// TODO: implement resizability
-		// if (!options.resizable)
-		// 	style ^= WS_THICKFRAME | WS_MAXIMIZEBOX;
+			isModal = true;
+			parentWindow = modalFor.hwnd;
+		}
+		else {
+			parentWindow = GetDesktopWindow();
+		}
+
+		recomputeStyle(options.initialState);
 
 		RECT rect = RECT(0, 0, options.size.x, options.size.y);
 		AdjustWindowRect(&rect, style, FALSE);
+
+		int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
+
+		if (isModal) {
+			RECT parentRect = rect;
+			GetWindowRect(parentWindow, &parentRect);
+			x = (parentRect.left + parentRect.right - (rect.right - rect.left)) / 2;
+			y = (parentRect.top + parentRect.bottom - (rect.bottom - rect.top)) / 2;
+		}
 
 		m_title = options.title;
 		m_hwnd = CreateWindowExW(
@@ -182,11 +201,11 @@ private:
 			"gd_WindowClass".toWStr, // TODO: custom window class support
 			options.title.toWStr,
 			style,
-			options.position.isNull ? CW_USEDEFAULT : options.position.get.x,
-			options.position.isNull ? CW_USEDEFAULT : options.position.get.y,
+			options.position.isNull ? x : options.position.get.x,
+			options.position.isNull ? y : options.position.get.y,
 			rect.right - rect.left,
 			rect.bottom - rect.top,
-			GetDesktopWindow(),
+			parentWindow,
 			null, display.hInstance, null,
 		);
 		createdHWND = true;
@@ -384,6 +403,31 @@ public:
 		);
 	}
 
+	private bool recomputeStyle(WindowState state) {
+		int newStyle;
+
+		if ((state & WindowState.Fullscreen) == WindowState.Fullscreen) {
+			newStyle = WS_POPUP | WS_SYSMENU;
+		}
+		else {
+			newStyle = WS_OVERLAPPEDWINDOW;
+
+			if (isModal)
+				newStyle = newStyle & ~(WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
+
+			if ((state & WindowState.FixedSize) == WindowState.FixedSize)
+				newStyle = newStyle & ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
+		}
+
+		if (style != newStyle) {
+			style = newStyle;
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
 	private WindowState m_state;
 	override WindowState state() const @property { return m_state; }
 	override void state(WindowState value) @property {
@@ -415,14 +459,7 @@ public:
 				0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		}
 
-		if ((add | remove) & WindowState.Fullscreen) {
-			if (remove & WindowState.Fullscreen) {
-				style = WS_OVERLAPPEDWINDOW;
-			}
-			else {
-				style = WS_POPUP | WS_SYSMENU;
-			}
-
+		if (recomputeStyle(value) && (value & WindowState.Visible)) {
 			SetWindowLongPtrA(hwnd, GWL_STYLE, style);
 		}
 
@@ -436,8 +473,16 @@ public:
 			else {
 				ShowWindow(hwnd, SW_SHOWNORMAL);
 			}
+
+			if (isModal) {
+				EnableWindow(parentWindow, FALSE);
+			}
 		}
 		else if (remove & WindowState.Visible) {
+			if (isModal) {
+				EnableWindow(parentWindow, TRUE);
+			}
+
 			ShowWindow(hwnd, SW_HIDE);
 		}
 		else if (value & WindowState.Visible) {

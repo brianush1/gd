@@ -573,7 +573,7 @@ class Win32SSLManager : SSLManager {
 			hCreds,               // (out) Cred Handle
 			&tsExpiry);           // (out) Lifetime (optional)
 
-		enforce(status == SEC_E_OK, "failed to acquire credentials");
+		enforce(status == SEC_E_OK, "failed to acquire credentials (" ~ getSECErrorString(status) ~ ")");
 	}
 
 }

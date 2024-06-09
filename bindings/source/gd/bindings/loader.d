@@ -1,5 +1,6 @@
 module gd.bindings.loader;
 import gd.resource;
+import gd.logging;
 
 struct BindingName {
 	string name;
@@ -174,9 +175,17 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 							*cast(void**)&fun = getProcAddress(libraryName);
 						}
 
-						assert(fun !is null, \"error when loading member ");
+						if (fun is null) {
+							logger.handleMissingBinding(LibraryType.stringof, \"");
 					write(member);
-					write("\");");
+					write("\");
+
+							static if (is(typeof(return) == void))
+								return;
+							else
+								return typeof(return).init;
+						}
+						");
 					static if (isVariadic) {
 						write("return fun;");
 					}

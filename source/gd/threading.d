@@ -47,7 +47,7 @@ private {
 }
 
 // TODO: Fiber.reset
-void spawnTask(void delegate() fn) {
+void spawnUnprotectedTask(void delegate() fn) {
 	TaskFiber fiber;
 
 	if (fiberPool.length == 0) {
@@ -60,4 +60,21 @@ void spawnTask(void delegate() fn) {
 
 	fiber.task = fn;
 	fiber.call();
+}
+
+void spawnTask(void delegate() fn) {
+	import gd.logging : logger;
+	import core.exception : RangeError;
+
+	spawnUnprotectedTask({
+		try {
+			fn();
+		}
+		catch (Exception ex) {
+			logger.logError(ex);
+		}
+		catch (RangeError err) {
+			logger.logError(err);
+		}
+	});
 }

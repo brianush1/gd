@@ -254,6 +254,8 @@ private:
 
 	X11MousePointer[] m_pointers;
 
+	bool isModal = false;
+
 	package this(X11Display display, WindowInitOptions options) {
 		scope (failure) dispose();
 
@@ -338,6 +340,19 @@ private:
 			X11.CWColormap | X11.CWOverrideRedirect,
 			&winAttribs,
 		);
+
+		if (options.modalFor) {
+			X11Window modalFor = cast(X11Window) options.modalFor;
+			enforce!X11Exception(modalFor !is null, "expected X11 window as modal target");
+
+			isModal = true;
+
+			changeProperty(
+				display.atom!"WM_TRANSIENT_FOR",
+				display.atom!("WINDOW", No.create),
+				[modalFor.native],
+			);
+		}
 
 		int[9] contextAttribs = [
 			GLX.CONTEXT_MAJOR_VERSION_ARB, options.glVersionMajor,
@@ -1106,11 +1121,28 @@ public:
 		atoms ~= AtomState(WindowState.Attention, display.atom!"_NET_WM_STATE_DEMANDS_ATTENTION");
 		atoms ~= AtomState(WindowState.Topmost, display.atom!"_NET_WM_STATE_ABOVE");
 
+		if (isModal) {
+			atoms ~= AtomState(WindowState.None, display.atom!"_NET_WM_STATE_MODAL");
+		}
+
+		if (add & WindowState.FixedSize) {
+			X11.XSizeHints sizeHints;
+			sizeHints.flags = X11.PMinSize | X11.PMaxSize;
+			sizeHints.min_width = sizeHints.max_width = size.x;
+			sizeHints.min_height = sizeHints.max_height = size.y;
+			X11.setWMNormalHints(display.native, native, &sizeHints);
+		}
+		else if (remove & WindowState.FixedSize) {
+			X11.XSizeHints sizeHints;
+			sizeHints.flags = X11.None;
+			X11.setWMNormalHints(display.native, native, &sizeHints);
+		}
+
 		if (add & WindowState.Visible) {
 			X11.Atom[] wmState;
 
 			foreach (atomState; atoms) {
-				if (value & atomState.state) {
+				if ((value & atomState.state) == atomState.state) {
 					wmState ~= atomState.atom1;
 
 					if (atomState.atom2 != X11.None) {
