@@ -156,13 +156,14 @@ private int epollFlags(SocketProtocol protocol) {
 			| EPOLLPRI
 			| EPOLLERR
 			| EPOLLHUP
+			| EPOLLET
 		;
 	case SocketProtocol.UDP:
 		return 0
 			| EPOLLIN
 			| EPOLLOUT
 			| EPOLLERR
-			// | EPOLLET
+			| EPOLLET
 		;
 	}
 }
