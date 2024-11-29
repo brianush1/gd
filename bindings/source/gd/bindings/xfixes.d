@@ -24,7 +24,7 @@ XFixesLibrary loadXFixes() {
 		libraries = ["libXfixes.so.3", "libXfixes.so"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(XFixesLibrary, delegate(string name) {

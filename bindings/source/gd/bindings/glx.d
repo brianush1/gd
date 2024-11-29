@@ -25,7 +25,7 @@ GLXLibrary loadGLX() {
 		libraries = ["libGL.so.1", "libGL.so"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(GLXLibrary, delegate(string name) {

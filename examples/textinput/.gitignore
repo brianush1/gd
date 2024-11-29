@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/textinput
+textinput.so
+textinput.dylib
+textinput.dll
+textinput.a
+textinput.lib
+textinput-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

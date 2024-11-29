@@ -1,0 +1,8 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"gd": {"path":"../.."},
+		"imageformats": "7.0.2",
+		"weakset": "1.0.1"
+	}
+}

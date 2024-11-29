@@ -24,7 +24,7 @@ XCursorLibrary loadXCursor() {
 		libraries = ["libXcursor.so.1", "libXcursor.so"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(XCursorLibrary, delegate(string name) {

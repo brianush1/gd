@@ -23,7 +23,7 @@ X11Library loadX11() {
 		libraries = ["libX11.so.6", "libX11.so"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(X11Library, delegate(string name) {

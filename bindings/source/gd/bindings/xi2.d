@@ -25,7 +25,7 @@ XI2Library loadXI2() {
 		libraries = ["libXi.so.6", "libXi.so"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(XI2Library, delegate(string name) {

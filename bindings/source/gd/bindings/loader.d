@@ -240,3 +240,89 @@ LibraryType loadSharedLibrary(LibraryType, string delegate(string) toLibraryName
 
 	return result;
 }
+
+LibraryType loadStaticLibrary(LibraryType, string delegate(string) toLibraryName)()
+		if (is(LibraryType : Resource)) {
+	enum Members = {
+		string[] members = [__traits(allMembers, LibraryType)];
+		for (size_t i = members.length - 1; i >= 0; i--) {
+			// WARNING: this depends on the ordering of allMembers
+			if (members[i] == "__ctor") {
+				return members[0 .. i];
+			}
+		}
+
+		assert(0);
+	}();
+
+	enum code = {
+		char[] result = new char[(Members.length + 1) * 1024];
+
+		size_t index = 0;
+		void write(string str) {
+			result[index .. (index += str.length)] = str[];
+		}
+
+		write("extern (System) @nogc nothrow:
+
+		");
+
+		static foreach (member; Members) {{
+			static if (
+				is(typeof(__traits(getMember, LibraryType, member)) == function)
+			) {
+				alias bindingNameTuple = __traits(getAttributes, __traits(getOverloads, LibraryType, member)[0]);
+				static if (bindingNameTuple.length > 0) {
+					string libraryName = bindingNameTuple[0].name;
+				}
+				else {
+					string libraryName = toLibraryName(member);
+				}
+				write("static if (is(typeof(LibraryType.");
+				write(member);
+				write(") P");
+				write(member);
+				write(" == function) && is(typeof(LibraryType.");
+				write(member);
+				write(") R");
+				write(member);
+				write(" == return)) {
+					override R");
+				write(member);
+				write(" ");
+				write(member);
+				write("(P");
+				write(member);
+				write(" args) {
+					pragma(mangle, \"");
+				write(libraryName);
+				write("\")
+					static extern (C) R");
+				write(member);
+				write(" fun(P");
+				write(member);
+				write(" p) @nogc nothrow;
+					return fun(args);
+				}}");
+			}
+		}}
+
+		return result[0 .. index];
+	}();
+
+	final class ResultType : LibraryType {
+		protected override void disposeImpl() {}
+
+		mixin(code);
+	}
+
+	static ResultType result;
+
+	if (result !is null) {
+		return result;
+	}
+
+	result = new ResultType;
+
+	return result;
+}

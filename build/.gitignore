@@ -1,0 +1,17 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/build
+build.so
+build.dylib
+build.dll
+build.a
+build.lib
+build-test-*
+gd_build
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

@@ -24,7 +24,7 @@ XSyncLibrary loadXSync() {
 		libraries = ["libXext.so.6", "libXext.so"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(XSyncLibrary, delegate(string name) {

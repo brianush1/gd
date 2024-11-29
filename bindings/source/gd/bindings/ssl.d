@@ -26,7 +26,7 @@ SSLLibrary loadSSL() {
 		];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(SSLLibrary, delegate(string name) {

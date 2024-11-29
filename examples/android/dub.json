@@ -1,0 +1,14 @@
+{
+	"authors": [
+		"Brian"
+	],
+	"copyright": "Copyright © 2024, Brian",
+	"dependencies": {
+		"gd": {
+			"path": "../.."
+		}
+	},
+	"description": "A minimal D application.",
+	"license": "proprietary",
+	"name": "android"
+}

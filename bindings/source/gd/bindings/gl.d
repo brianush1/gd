@@ -24,7 +24,7 @@ GLLibrary loadGL() {
 		libraries = ["OpenGL32.dll"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(GLLibrary, delegate(string name) {

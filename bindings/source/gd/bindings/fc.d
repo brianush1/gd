@@ -23,7 +23,7 @@ FCLibrary loadFC() {
 		libraries = ["libfontconfig.so.1", "libfontconfig.so"];
 	}
 	else {
-		static assert(0, "unsupported platform");
+		assert(0, "unsupported platform");
 	}
 
 	return loadSharedLibrary!(FCLibrary, delegate(string name) {

@@ -49,7 +49,9 @@ Thread guiThread() @property {
 }
 
 Application application() @property {
-	assert(Thread.getThis is guiThread, "application can only be accessed in GUI thread");
+	version (gd_Android) {} else {
+		assert(Thread.getThis is guiThread, "application can only be accessed in GUI thread");
+	}
 	return m_application;
 }
 
@@ -65,6 +67,11 @@ shared static this() {
 		import gd.system.win32.application : Win32Application;
 
 		m_application = new Win32Application();
+	}
+	else version (gd_Android) {
+		import gd.system.android.application : AndroidApplication;
+
+		m_application = new AndroidApplication();
 	}
 	else {
 		static assert(0, "unsupported platform");
@@ -95,7 +102,9 @@ version (unittest) {} else {
 		import gd.system.win32.winmain;
 	}
 
-	version (gd_WinMain) {} else {
+	version (gd_WinMain) {}
+	else version (gd_Android) {}
+	else {
 		shared static this() {
 			// HACK: scan the stack to find where _Dmain is passed to _d_run_main2, and override that value
 			void* p;

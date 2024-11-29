@@ -31,6 +31,18 @@
 			"versions": [
 				"gd_Win32"
 			]
+		},
+		{
+			"name": "gd_Android",
+			"libs": [
+				"android",
+				"log",
+				"GLESv2"
+			],
+			"targetType": "library",
+			"versions": [
+				"gd_Android"
+			]
 		}
 	],
 	"copyright": "Copyright © 2022, Brian",
@@ -45,6 +57,7 @@
 		"assets"
 	],
 	"subPackages": [
-		"./bindings/"
+		"./bindings/",
+		"./build/"
 	]
 }
