@@ -105,7 +105,7 @@ version (unittest) {} else {
 	version (gd_WinMain) {}
 	else version (gd_Android) {}
 	else {
-		shared static this() {
+		shared static this() @trusted {
 			// HACK: scan the stack to find where _Dmain is passed to _d_run_main2, and override that value
 			void* p;
 			void** s = &p;

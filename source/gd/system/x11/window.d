@@ -618,7 +618,7 @@ private:
 
 	long currentConfigureTimer = -1;
 
-	package void processEvent(X11.XEvent* ev) {
+	package void processEvent(X11.XEvent* ev) @trusted {
 		static bool syncRequest = false;
 		static XSync.XSyncValue syncValue;
 
@@ -859,7 +859,7 @@ private:
 		}
 	}
 
-	package void processXI2Event(XI2.XIRawEvent* ev) {
+	package void processXI2Event(XI2.XIRawEvent* ev) @trusted {
 		X11MousePointer pointer = getPointerByDeviceId(ev.deviceid);
 
 		if (pointer is null)

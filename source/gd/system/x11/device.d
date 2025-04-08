@@ -64,7 +64,7 @@ private:
 
 	protected override void disposeImpl() {}
 
-	void addDevices() {
+	void addDevices() @trusted {
 		int deviceCount;
 
 		XI2.XIDeviceInfo* di = XI2.queryDevice(display.native, XI2.XIAllMasterDevices, &deviceCount);
@@ -101,7 +101,7 @@ private:
 		XI2.freeDeviceInfo(di);
 	}
 
-	void processXI2Event(X11.XGenericEventCookie* cookie) {
+	void processXI2Event(X11.XGenericEventCookie* cookie) @trusted {
 		import std.stdio : writefln;
 
 		switch (cookie.evtype) {
