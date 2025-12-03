@@ -124,6 +124,10 @@ debug (resourceLeaks) {
 
 abstract class Resource {
 
+	static if (is(typeof(EnableSynchronization))) {
+		mixin EnableSynchronization;
+	}
+
 	private WeakSet!Resource m_children;
 	private bool[Resource] parents;
 	private size_t m_id;

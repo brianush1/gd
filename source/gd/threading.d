@@ -1,5 +1,8 @@
 module gd.threading;
 import core.thread.fiber;
+version (linux) {
+	import etc.linux.memoryerror;
+}
 
 private {
 	// TODO: maybe use a weakset to store the fiber pool and just let the GC clean it up?
@@ -64,17 +67,23 @@ void spawnUnprotectedTask(void delegate() fn) {
 
 void spawnTask(void delegate() fn) {
 	import gd.logging : logger;
-	import core.exception : RangeError;
+	static import core.exception;
 
 	spawnUnprotectedTask({
-		try {
-			fn();
-		}
-		catch (Exception ex) {
-			logger.logError(ex);
-		}
-		catch (RangeError err) {
-			logger.logError(err);
-		}
+		enum src = {
+			string res = "try { fn(); }";
+			static foreach (name; [
+				"Exception",
+				"core.exception.RangeError",
+				"core.exception.NullPointerError",
+				"InvalidPointerError",
+			]) {
+				static if (is(mixin(name))) {
+					res ~= "catch (" ~ name ~ " ex) { logger.logError(ex); }";
+				}
+			}
+			return res;
+		}();
+		mixin(src);
 	});
 }
