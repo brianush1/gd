@@ -181,7 +181,7 @@ abstract class Resource {
 	private bool m_disposed = false;
 	bool disposed() const @property { return m_disposed; }
 
-	void dispose() {
+	void dispose() @trusted {
 		import std.array : array;
 
 		if (!m_disposed) {
