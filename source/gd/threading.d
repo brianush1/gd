@@ -1,8 +1,5 @@
 module gd.threading;
 import core.thread.fiber;
-version (linux) {
-	import etc.linux.memoryerror;
-}
 
 private {
 	// TODO: maybe use a weakset to store the fiber pool and just let the GC clean it up?
@@ -76,7 +73,6 @@ void spawnTask(void delegate() fn) {
 				"Exception",
 				"core.exception.RangeError",
 				"core.exception.NullPointerError",
-				"InvalidPointerError",
 			]) {
 				static if (is(mixin(name))) {
 					res ~= "catch (" ~ name ~ " ex) { logger.logError(ex); }";
