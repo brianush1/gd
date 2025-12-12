@@ -1,6 +1,7 @@
 module gd.math.rect;
 import gd.math;
 import std.typecons;
+import std.traits : isFloatingPoint;
 
 alias Rect = TRect!double;
 alias IRect = TRect!int;
@@ -87,6 +88,36 @@ struct TRect(T) {
 				max(right, other.right) - pos.x,
 				max(bottom, other.bottom) - pos.y,
 			));
+		}
+	}
+
+	TRect!T opBinary(string op)(const(TRect!T) other) {
+		return TRect!T(
+			mixin("position", op, "other.position"),
+			mixin("size", op, "other.size"),
+		);
+	}
+
+	TRect!T opBinary(string op)(const(T) other) {
+		return TRect!T(
+			mixin("position", op, "other"),
+			mixin("size", op, "other"),
+		);
+	}
+
+	static if (isFloatingPoint!T) {
+		TRect!T round() const {
+			import std.math : round;
+
+			T newLeft = round(left);
+			T newRight = round(right);
+			T newTop = round(top);
+			T newBottom = round(bottom);
+
+			return TRect!T(
+				TVec2!T(newLeft, newTop),
+				TVec2!T(newRight - newLeft, newBottom - newTop),
+			);
 		}
 	}
 }
