@@ -1334,10 +1334,12 @@ public:
 			c_ulong remaining, size;
 			X11.getWindowProperty(ev.display, ev.requestor, ev.property, 0, ~0L, 0,
 				X11.AnyPropertyType, &target, &format, &size, &remaining, &data);
+			scope (exit) {
+				X11.free(data);
+			}
 
 			if (target == display.atom!"UTF8_STRING" || target == display.atom!"STRING") {
 				ubyte[] res = data[0 .. size].dup;
-				X11.free(data);
 				return typeof(return)(ev.time, res);
 			}
 			else {
