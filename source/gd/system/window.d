@@ -121,6 +121,7 @@ abstract class Window : Resource {
 
 	Signal!IVec2 onSizeChange;
 	Signal!WindowState onStateChange;
+	Signal!double onDevicePixelRatioChange;
 
 	Slot handlePointer(Handler!Pointer handler) {
 		Slot result = onPointerAdd.connect(handler);
@@ -137,6 +138,8 @@ abstract class Window : Resource {
 	inout(Pointer) primaryPointer() inout @property {
 		return pointers[0];
 	}
+
+	double devicePixelRatio() const @property { return 1; }
 
 	abstract void setIcon(IVec2 size, const(uint)[] data);
 	abstract void setPaintHandler(PaintHandler handler);

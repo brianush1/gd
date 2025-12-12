@@ -1094,6 +1094,92 @@ public:
 		X11.moveResizeWindow(display.native, native, attrs.x, attrs.y, value.x, value.y);
 	}
 
+	override double devicePixelRatio() const @property {
+		import std.string : toStringz;
+		import std.conv : text;
+
+		X11Display dpy = cast() display;
+		int screen = X11.defaultScreen(dpy.native);
+		X11.Atom selection = X11.internAtom(dpy.native, text("_XSETTINGS_S", screen).toStringz, false);
+		X11.Window owner = X11.getSelectionOwner(dpy.native, selection);
+		if (!owner) {
+			return 1;
+		}
+
+		X11.Atom settingsAtom = dpy.atom!"_XSETTINGS_SETTINGS";
+		X11.Atom propType;
+		int format;
+		ulong size, bytesAfter;
+		ubyte* dataRaw;
+		if (X11.getWindowProperty(dpy.native, owner, settingsAtom, 0, 65_536, false, settingsAtom,
+				&propType, &format,
+				&size, &bytesAfter, &dataRaw) != X11.Success) {
+			return 1;
+		}
+
+		scope (exit) {
+			X11.free(dataRaw);
+		}
+
+		ubyte[] data = dataRaw[0 .. size];
+
+		bool littleEndian;
+		if (data[0] == 'l') littleEndian = true;
+		else if (data[0] == 'B') littleEndian = false;
+		else {
+			version (BigEndian) {
+				littleEndian = false;
+			}
+			else {
+				littleEndian = true;
+			}
+		}
+
+		T get(T)(size_t offset) {
+			import std.bitmanip : littleEndianToNative, bigEndianToNative;
+
+			return littleEndian
+				? littleEndianToNative!T(cast(ubyte[T.sizeof]) data[offset .. $][0 .. T.sizeof])
+				: bigEndianToNative!T(cast(ubyte[T.sizeof]) data[offset .. $][0 .. T.sizeof]);
+		}
+
+		uint serial = get!uint(4);
+		uint nSettings = get!uint(8);
+
+		size_t offset = 12;
+		foreach (i; 0 .. nSettings) {
+			ubyte type = get!ubyte(offset++);
+			offset += 1; // unused
+			ushort nameLen = get!ushort(offset);
+			offset += 2;
+
+			char[] name = cast(char[]) data[offset .. offset + nameLen];
+			offset += nameLen;
+			offset += (4 - (nameLen % 4)) % 4;
+
+			offset += 4; // last-change-serial
+
+			if (type == 0) { // integer
+				int value = get!int(offset);
+				offset += 4;
+
+				if (name == "Gdk/UnscaledDPI" || name == "Xft/DPI") {
+					return value / (1024.0 * 96);
+				}
+			}
+			else if (type == 1) { // string
+				uint len = get!uint(offset);
+				offset += 4 + len;
+				offset += (4 - (len % 4)) % 4;
+			}
+			else if (type == 2) { // color
+				offset += 8;
+			}
+		}
+
+		return 1;
+	}
+
 	private WindowState m_state;
 	override WindowState state() const @property { return m_state; }
 	override void state(WindowState value) @property {
