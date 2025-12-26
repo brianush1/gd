@@ -341,6 +341,12 @@ class Win32Socket : Socket {
 				if (err_ != 0) {
 					err = err_;
 					hasError = true;
+					onWin32Events.disconnect(slot);
+
+					if (!yielded)
+						needYielding = false;
+					else
+						fiber.call();
 				}
 				else if (ev & FD_CONNECT) {
 					// we're connected
