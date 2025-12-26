@@ -972,7 +972,7 @@ public:
 
 	override void setIcon(IVec2 size, const(uint)[] data) {
 		assert(data.length == size.x * cast(size_t) size.y);
-		assert(size.x > 0 && size.y > 0);
+		assert(size.x > 0 && size.y > 0 && size.x <= 256 && size.y <= 256);
 		uint[] transformed = new uint[data.length + 2];
 		transformed[0] = size.x;
 		transformed[1] = size.y;
