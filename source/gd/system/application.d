@@ -97,12 +97,10 @@ version (unittest) {} else {
 		}
 	}
 
-	version (gd_Win32) {
+	version (gd_WinMain) {
 		// ensure that WinMain is compiled
 		import gd.system.win32.winmain;
 	}
-
-	version (gd_WinMain) {}
 	else version (gd_Android) {}
 	else {
 		shared static this() @trusted {

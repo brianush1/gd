@@ -1,9 +1,6 @@
 module gd.system.win32.winmain;
 
-version (none):
-version (gd_Win32):
-
-version = gd_WinMain;
+version (gd_WinMain):
 
 import core.runtime;
 import core.sys.windows.windows;
@@ -12,7 +9,7 @@ private:
 
 extern (C) int gdEventLoopWrapper(char[][] args);
 
-package(gd.system) extern (Windows) int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+package(gd.system) extern (Windows) int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) @trusted {
 	int result;
 
 	try {

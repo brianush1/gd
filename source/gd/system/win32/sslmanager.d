@@ -390,7 +390,7 @@ class Win32SSLInfo : SSLInfo {
 		}
 	}
 
-	private void sendMessage(const(void)[] data) {
+	private void sendMessage(const(void)[] data) @trusted {
 		SecBuffer[4] buffers;
 
 		ubyte[] buffer = new ubyte[sizes.cbHeader + data.length + sizes.cbTrailer];

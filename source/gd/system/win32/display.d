@@ -145,7 +145,7 @@ class Win32Display : Display {
 	}
 
 	// TODO: SetThreadCursorCreationScaling for multi-monitor DPI awareness
-	package HICON loadHIcon(IVec2 size, const(uint)[] data, Nullable!IVec2 hotspot = Nullable!IVec2()) {
+	package HICON loadHIcon(IVec2 size, const(uint)[] data, Nullable!IVec2 hotspot = Nullable!IVec2()) @trusted {
 		import std.range : iota, retro;
 
 		assert(data.length == size.x * cast(size_t) size.y);
