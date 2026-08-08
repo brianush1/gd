@@ -6,10 +6,12 @@ import gd.system.window;
 import gd.resource;
 import gd.keycode;
 import gd.math;
+import gd.bindings.vulkan : VkAllocationCallbacks, VkInstance, VkSurfaceKHR;
 
 version (gd_Android):
 
 class AndroidWindow : Window {
+	override GraphicsBackend graphicsBackend() const @property { return GraphicsBackend.OpenGL; }
 
 	package(gd.system) this(AndroidDisplay display) {
 		scope (failure) dispose();
@@ -33,6 +35,11 @@ class AndroidWindow : Window {
 	override void setIMECursorPosition(IVec2 position) {}
 	override void setSwapInterval(bool vsync) {}
 	override void makeContextCurrent() {}
+	override VkSurfaceKHR createVulkanSurface(
+		VkInstance instance, const(VkAllocationCallbacks)* allocator = null
+	) {
+		throw new Exception("Vulkan windows are not supported on Android");
+	}
 	override string title() const @property { return "AndroidWindow"; }
 	override void title(string value) @property {}
 

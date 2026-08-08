@@ -70,8 +70,17 @@ package(gd.system) extern (Windows) int WinMain(HINSTANCE, HINSTANCE, LPSTR, int
 	catch (Throwable ex) { // @suppress(dscanner.suspicious.catch_em_all)
 		import std.string : toStringz;
 
-		MessageBoxA(null, ex.toString.toStringz, "Uncaught runtime error", MB_ICONEXCLAMATION);
-		result = 0;
+		char[2] suppressDialog;
+		if (GetEnvironmentVariableA("GD_NO_ERROR_DIALOG", suppressDialog.ptr,
+			cast(DWORD) suppressDialog.length) == 0) {
+			MessageBoxA(null, ex.toString.toStringz, "Uncaught runtime error", MB_ICONEXCLAMATION);
+		}
+		else {
+			import std.stdio : stderr;
+
+			stderr.writeln(ex);
+		}
+		result = 1;
 	}
 
 	return result;

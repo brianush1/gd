@@ -17,6 +17,7 @@ version (gd_Win32):
 import core.sys.windows.windows;
 import gd.bindings.gl;
 import gd.bindings.loader;
+import VK = gd.bindings.vulkan;
 
 private {
 	const(wchar)* toWStr(string str) {
@@ -149,6 +150,9 @@ private:
 	Win32Display m_display;
 	public inout(Win32Display) display() inout @property { return m_display; }
 
+	GraphicsBackend m_graphicsBackend;
+	public override GraphicsBackend graphicsBackend() const @property { return m_graphicsBackend; }
+
 	bool createdHWND;
 	HWND m_hwnd;
 	public inout(HWND) hwnd() inout @property { return m_hwnd; }
@@ -167,6 +171,7 @@ private:
 		scope (failure) dispose();
 
 		m_display = display;
+		m_graphicsBackend = options.graphicsBackend;
 
 		addDependency(display);
 
@@ -212,62 +217,69 @@ private:
 
 		SetWindowLongPtrW(hwnd, GWLP_USERDATA, cast(LONG_PTR) cast(void*) this);
 
-		hdc = GetDC(hwnd);
+		if (graphicsBackend == GraphicsBackend.OpenGL) {
+			hdc = GetDC(hwnd);
 
-		PIXELFORMATDESCRIPTOR pfd;
-		pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
-		pfd.nVersion = 1;
-		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-		pfd.dwLayerMask = PFD_MAIN_PLANE;
-		pfd.iPixelType = PFD_TYPE_RGBA;
-		pfd.cColorBits = 24;
-		pfd.cDepthBits = 24; // cast(ubyte) options.depthSize;
-		pfd.cAccumBits = 0;
-		pfd.cStencilBits = 8;
+			PIXELFORMATDESCRIPTOR pfd;
+			pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
+			pfd.nVersion = 1;
+			pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+			pfd.dwLayerMask = PFD_MAIN_PLANE;
+			pfd.iPixelType = PFD_TYPE_RGBA;
+			pfd.cColorBits = 24;
+			pfd.cDepthBits = 24;
+			pfd.cAccumBits = 0;
+			pfd.cStencilBits = 8;
 
-		int pixelFormat = ChoosePixelFormat(hdc, &pfd);
+			int pixelFormat = ChoosePixelFormat(hdc, &pfd);
+			if (pixelFormat == 0)
+				throw new Win32Exception("ChoosePixelFormat", GetLastError());
 
-		if (pixelFormat == 0)
-			throw new Win32Exception("ChoosePixelFormat", GetLastError());
+			if (SetPixelFormat(hdc, pixelFormat, &pfd) == 0)
+				throw new Win32Exception("SetPixelFormat", GetLastError());
 
-		if (SetPixelFormat(hdc, pixelFormat, &pfd) == 0)
-			throw new Win32Exception("SetPixelFormat", GetLastError());
-
-		if (wglCreateContextAttribsARB is null) {
-			// we need a context in order to get the function address, so we make a dummy context
-
-			HGLRC dummy = wglCreateContext(hdc);
-			if (dummy !is null) {
-				wglMakeCurrent(hdc, dummy);
-				wglCreateContextAttribsARB = cast(wglCreateContextAttribsARB_t) wglGetProcAddress("wglCreateContextAttribsARB");
-				wglMakeCurrent(hdc, null);
-				wglDeleteContext(dummy);
+			if (wglCreateContextAttribsARB is null) {
+				HGLRC dummy = wglCreateContext(hdc);
+				if (dummy !is null) {
+					wglMakeCurrent(hdc, dummy);
+					wglCreateContextAttribsARB = cast(wglCreateContextAttribsARB_t)
+						wglGetProcAddress("wglCreateContextAttribsARB");
+					wglMakeCurrent(hdc, null);
+					wglDeleteContext(dummy);
+				}
 			}
+
+			if (!wglCreateContextAttribsARB)
+				throw new Win32Exception("could not get address of wglCreateContextAttribsARB");
+
+			int[9] contextAttribs = [
+				WGL_CONTEXT_MAJOR_VERSION_ARB, options.glVersionMajor,
+				WGL_CONTEXT_MINOR_VERSION_ARB, options.glVersionMinor,
+				WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+				WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+				0,
+			];
+
+			HGLRC shareContext = null;
+			if (options.shareContext !is null) {
+				Win32Window shareWindow = cast(Win32Window) options.shareContext;
+				enforce!Win32Exception(shareWindow !is null,
+					"expected a Win32 window as shareContext");
+				enforce!Win32Exception(shareWindow.graphicsBackend == GraphicsBackend.OpenGL,
+					"shareContext must refer to an OpenGL window");
+				shareContext = shareWindow.wglContext;
+			}
+			wglContext = wglCreateContextAttribsARB(hdc, shareContext, contextAttribs.ptr);
+
+			if (wglContext is null)
+				throw new Win32Exception("wglCreateContextAttribsARB", GetLastError());
+
+			makeContextCurrent();
 		}
-
-		if (!wglCreateContextAttribsARB)
-			throw new Win32Exception("could not get address of wglCreateContextAttribsARB");
-
-		int[9] contextAttribs = [
-			WGL_CONTEXT_MAJOR_VERSION_ARB, options.glVersionMajor,
-			WGL_CONTEXT_MINOR_VERSION_ARB, options.glVersionMinor,
-			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-			0,
-		];
-
-		HGLRC shareContext = null;
-		if (options.shareContext !is null) {
-			Win32Window shareWindow = cast(Win32Window) options.shareContext;
-			enforce!Win32Exception(shareWindow !is null, "expected a Win32 window as shareContext");
-			shareContext = shareWindow.wglContext;
+		else {
+			enforce!Win32Exception(options.shareContext is null,
+				"shareContext is only valid for OpenGL windows");
 		}
-		wglContext = wglCreateContextAttribsARB(hdc, shareContext, contextAttribs.ptr);
-
-		if (wglContext is null)
-			throw new Win32Exception("wglCreateContextAttribsARB", GetLastError());
-
-		makeContextCurrent();
 
 		assert(!(options.initialState & WindowState.Visible),
 			"window cannot be visible on creation, since a paint handler ought to be set when the window is first shown");
@@ -339,6 +351,7 @@ public:
 		rect.right = region.right;
 		rect.bottom = region.bottom;
 		InvalidateRect(hwnd, &rect, false);
+		UpdateWindow(hwnd);
 	}
 
 	override void invalidate(IRect region) {
@@ -359,11 +372,43 @@ public:
 	}
 
 	override void makeContextCurrent() {
+		enforce!Win32Exception(graphicsBackend == GraphicsBackend.OpenGL,
+			"makeContextCurrent is only valid for OpenGL windows");
 		wglMakeCurrent(hdc, wglContext);
 	}
 
 	override void setSwapInterval(bool vsync) {
+		enforce!Win32Exception(graphicsBackend == GraphicsBackend.OpenGL,
+			"setSwapInterval is only valid for OpenGL windows");
 		// TODO: implement
+	}
+
+	override VK.VkSurfaceKHR createVulkanSurface(
+		VK.VkInstance instance, const(VK.VkAllocationCallbacks)* allocator = null
+	) {
+		enforce!Win32Exception(graphicsBackend == GraphicsBackend.Vulkan,
+			"createVulkanSurface is only valid for Vulkan windows");
+		enforce!Win32Exception(!disposed, "cannot create a Vulkan surface for a disposed window");
+		enforce!Win32Exception(instance !is null,
+			"cannot create a surface for a null Vulkan instance");
+
+		VK.VulkanInstanceDispatch dispatch = VK.loadVulkanGlobalDispatch().loadInstance(instance);
+		enforce!Win32Exception(dispatch.vkCreateWin32SurfaceKHR !is null,
+			"Vulkan instance does not enable VK_KHR_win32_surface");
+
+		VK.VkWin32SurfaceCreateInfoKHR createInfo;
+		createInfo.hinstance = display.hInstance;
+		createInfo.hwnd = hwnd;
+
+		VK.VkSurfaceKHR surface;
+		VK.VkResult result = dispatch.vkCreateWin32SurfaceKHR(
+			instance, &createInfo, allocator, &surface);
+		if (result != VK.VK_SUCCESS) {
+			throw new Win32Exception(
+				"vkCreateWin32SurfaceKHR failed with VkResult " ~ (cast(int) result).to!string);
+		}
+
+		return surface;
 	}
 
 	void repaintImmediately() {
@@ -371,10 +416,12 @@ public:
 			return;
 		}
 
-		makeContextCurrent();
+		if (graphicsBackend == GraphicsBackend.OpenGL)
+			makeContextCurrent();
 		m_paintHandler();
 
-		SwapBuffers(hdc);
+		if (graphicsBackend == GraphicsBackend.OpenGL)
+			SwapBuffers(hdc);
 
 		if (m_postPaintHandler)
 			m_postPaintHandler();

@@ -14,6 +14,7 @@ abstract class Display : Resource {
 
 	+/
 	abstract Window createWindow(WindowInitOptions options);
+	abstract string[] vulkanInstanceExtensions() const;
 
 	// TODO: animated cursors
 	abstract Cursor createCursor(IVec2 size, const(uint)[] data, IVec2 hotspot);

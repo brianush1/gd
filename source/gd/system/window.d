@@ -6,9 +6,16 @@ import gd.signal;
 import gd.graphics.color;
 import gd.cursor : Cursors;
 import gd.math;
+import gd.bindings.vulkan : VkAllocationCallbacks, VkInstance, VkSurfaceKHR;
 import std.typecons;
 
+enum GraphicsBackend : ubyte {
+	OpenGL,
+	Vulkan,
+}
+
 struct WindowInitOptions {
+	GraphicsBackend graphicsBackend = GraphicsBackend.OpenGL;
 	int depthSize = 16;
 	int glVersionMajor = 3;
 	int glVersionMinor = 0;
@@ -109,6 +116,7 @@ enum Clipboard {
 }
 
 abstract class Window : Resource {
+	abstract GraphicsBackend graphicsBackend() const @property;
 
 	/++ Fired when the user requests to close the window, for example by clicking the close button +/
 	Signal!() onCloseRequest;
@@ -165,6 +173,8 @@ abstract class Window : Resource {
 	abstract void setSwapInterval(bool vsync);
 
 	abstract void makeContextCurrent();
+	abstract VkSurfaceKHR createVulkanSurface(
+		VkInstance instance, const(VkAllocationCallbacks)* allocator = null);
 
 	abstract string title() const @property;
 	abstract void title(string value) @property;

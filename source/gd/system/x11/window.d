@@ -22,6 +22,7 @@ import gd.bindings.xi2;
 import gd.bindings.xsync;
 import gd.bindings.glx;
 import gd.bindings.gl;
+import VK = gd.bindings.vulkan;
 
 immutable(string) WINDOW_CLASS = "gd_window";
 
@@ -240,6 +241,9 @@ private:
 	X11Display m_display;
 	public inout(X11Display) display() inout @property { return m_display; }
 
+	GraphicsBackend m_graphicsBackend;
+	public override GraphicsBackend graphicsBackend() const @property { return m_graphicsBackend; }
+
 	bool createdXWindow;
 	X11.Window m_native;
 	public inout(X11.Window) native() inout @property { return m_native; }
@@ -260,6 +264,7 @@ private:
 		scope (failure) dispose();
 
 		m_display = display;
+		m_graphicsBackend = options.graphicsBackend;
 
 		addDependency(display);
 
@@ -287,45 +292,59 @@ private:
 		int screen = X11.defaultScreen(display.native);
 		X11.Window root = X11.rootWindow(display.native, screen);
 
-		int[23] visualAttribs = [
-			GLX.X_RENDERABLE, X11.True,
-			GLX.DRAWABLE_TYPE, GLX.PIXMAP_BIT,
-			GLX.RENDER_TYPE, GLX.RGBA_BIT,
-			GLX.X_VISUAL_TYPE, GLX.TRUE_COLOR,
-			GLX.RED_SIZE, 8,
-			GLX.GREEN_SIZE, 8,
-			GLX.BLUE_SIZE, 8,
-			GLX.ALPHA_SIZE, 8,
-			GLX.DEPTH_SIZE, options.depthSize,
-			GLX.STENCIL_SIZE, 8,
-			GLX.DOUBLEBUFFER, X11.True,
-			X11.None,
-		];
+		X11.Visual* visual;
+		int visualDepth;
+		X11.XVisualInfo* visualInfo;
+		scope (exit) if (visualInfo) X11.free(visualInfo);
 
-		int fbcount;
-		GLX.GLXFBConfig* fbconfigs = GLX.chooseFBConfig(display.native, screen, visualAttribs.ptr, &fbcount);
-		enforce!X11Exception(fbcount > 0, "could not get framebuffer config");
+		if (graphicsBackend == GraphicsBackend.OpenGL) {
+			int[23] visualAttribs = [
+				GLX.X_RENDERABLE, X11.True,
+				GLX.DRAWABLE_TYPE, GLX.PIXMAP_BIT,
+				GLX.RENDER_TYPE, GLX.RGBA_BIT,
+				GLX.X_VISUAL_TYPE, GLX.TRUE_COLOR,
+				GLX.RED_SIZE, 8,
+				GLX.GREEN_SIZE, 8,
+				GLX.BLUE_SIZE, 8,
+				GLX.ALPHA_SIZE, 8,
+				GLX.DEPTH_SIZE, options.depthSize,
+				GLX.STENCIL_SIZE, 8,
+				GLX.DOUBLEBUFFER, X11.True,
+				X11.None,
+			];
 
-		int chosenSamples = -1;
-		foreach (i, candidate; fbconfigs[0 .. fbcount]) {
-			int sampleBuffers, samples;
-			GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLE_BUFFERS, &sampleBuffers);
-			GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLES, &samples);
-			if (i == 0 || (sampleBuffers > 0 && samples > chosenSamples)) { // TODO: samples > chosenSamples ?
-				fbconfig = candidate;
-				chosenSamples = samples;
+			int fbcount;
+			GLX.GLXFBConfig* fbconfigs = GLX.chooseFBConfig(
+				display.native, screen, visualAttribs.ptr, &fbcount);
+			enforce!X11Exception(fbcount > 0, "could not get framebuffer config");
+
+			int chosenSamples = -1;
+			foreach (i, candidate; fbconfigs[0 .. fbcount]) {
+				int sampleBuffers, samples;
+				GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLE_BUFFERS, &sampleBuffers);
+				GLX.getFBConfigAttrib(display.native, candidate, GLX.SAMPLES, &samples);
+				if (i == 0 || (sampleBuffers > 0 && samples > chosenSamples)) {
+					fbconfig = candidate;
+					chosenSamples = samples;
+				}
 			}
+			X11.free(fbconfigs);
+
+			enforce!X11Exception(chosenSamples != -1, "could not get framebuffer configuration");
+			visualInfo = GLX.getVisualFromFBConfig(display.native, fbconfig);
+			enforce!X11Exception(visualInfo != null, "could not get OpenGL visual");
+			visual = visualInfo.visual;
+			visualDepth = visualInfo.depth;
 		}
-		// this free call is safe, since no statements between the creation of fbconfigs and this free can throw
-		X11.free(fbconfigs);
-
-		enforce!X11Exception(chosenSamples != -1, "could not get framebuffer configuration");
-
-		X11.XVisualInfo* visualInfo = GLX.getVisualFromFBConfig(display.native, fbconfig);
-		enforce!X11Exception(visualInfo != null, "could not get OpenGL visual");
+		else {
+			enforce!X11Exception(options.shareContext is null,
+				"shareContext is only valid for OpenGL windows");
+			visual = X11.defaultVisual(display.native, screen);
+			visualDepth = X11.defaultDepth(display.native, screen);
+		}
 
 		X11.XSetWindowAttributes winAttribs;
-		winAttribs.colormap = X11.createColormap(display.native, root, visualInfo.visual, X11.AllocNone);
+		winAttribs.colormap = X11.createColormap(display.native, root, visual, X11.AllocNone);
 		// winAttribs.override_redirect = isPopup; // TODO: support for popup windows
 
 		createdXWindow = true; // used to make sure we don't destroy a window in disposeImpl before it's created
@@ -334,9 +353,9 @@ private:
 			root, // parent
 			0, 0, options.size.x, options.size.y, // x, y, width, height
 			0, // border width
-			visualInfo.depth, // color depth
+			visualDepth, // color depth
 			X11.InputOutput,
-			visualInfo.visual,
+			visual,
 			X11.CWColormap | X11.CWOverrideRedirect,
 			&winAttribs,
 		);
@@ -354,27 +373,31 @@ private:
 			);
 		}
 
-		int[9] contextAttribs = [
-			GLX.CONTEXT_MAJOR_VERSION_ARB, options.glVersionMajor,
-			GLX.CONTEXT_MINOR_VERSION_ARB, options.glVersionMinor,
-			GLX.CONTEXT_PROFILE_MASK_ARB, GLX.CONTEXT_CORE_PROFILE_BIT_ARB,
-			GLX.CONTEXT_FLAGS_ARB, GLX.CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-			X11.None,
-		];
+		if (graphicsBackend == GraphicsBackend.OpenGL) {
+			int[9] contextAttribs = [
+				GLX.CONTEXT_MAJOR_VERSION_ARB, options.glVersionMajor,
+				GLX.CONTEXT_MINOR_VERSION_ARB, options.glVersionMinor,
+				GLX.CONTEXT_PROFILE_MASK_ARB, GLX.CONTEXT_CORE_PROFILE_BIT_ARB,
+				GLX.CONTEXT_FLAGS_ARB, GLX.CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+				X11.None,
+			];
 
-		GLX.GLXContext shareContext = null;
-		if (options.shareContext !is null) {
-			X11Window shareWindow = cast(X11Window) options.shareContext;
-			enforce!X11Exception(shareWindow !is null, "expected an X11 window as shareContext");
-			shareContext = shareWindow.glxContext;
+			GLX.GLXContext shareContext = null;
+			if (options.shareContext !is null) {
+				X11Window shareWindow = cast(X11Window) options.shareContext;
+				enforce!X11Exception(shareWindow !is null,
+					"expected an X11 window as shareContext");
+				enforce!X11Exception(shareWindow.graphicsBackend == GraphicsBackend.OpenGL,
+					"shareContext must refer to an OpenGL window");
+				shareContext = shareWindow.glxContext;
+			}
+			glxContext = GLX.createContextAttribsARB(
+				display.native, fbconfig, shareContext, X11.True, contextAttribs.ptr);
+
+			X11.sync(display.native, X11.False);
+			X11Window.makeContextCurrent();
+			GLX.swapIntervalEXT(display.native, native, 1);
 		}
-		glxContext = GLX.createContextAttribsARB(display.native, fbconfig, shareContext, X11.True, contextAttribs.ptr);
-
-		// sync to ensure any errors generated are processed
-		X11.sync(display.native, X11.False);
-
-		X11Window.makeContextCurrent();
-		GLX.swapIntervalEXT(display.native, native, 1);
 
 		title = options.title;
 		m_size = options.size;
@@ -444,8 +467,14 @@ private:
 	}
 
 	protected override void disposeImpl() {
+		display.invalidationQueue.remove(this);
+		display.activeWindows.remove(this);
+		display.windowMap.remove(native);
+		if (imeWindow)
+			display.windowMap.remove(imeWindow);
 		if (ic) X11.destroyIC(ic);
 		if (imeWindow) X11.destroyWindow(display.native, imeWindow);
+		if (glxContext) GLX.destroyContext(display.native, glxContext);
 		if (createdXWindow) X11.destroyWindow(display.native, native);
 		if (xsyncCounter != X11.None) XSync.destroyCounter(display.native, xsyncCounter);
 	}
@@ -721,13 +750,21 @@ private:
 
 			break;
 		case X11.FocusIn:
-			onFocusEnter.emit();
+			if (ev.xfocus.detail != X11.NotifyInferior) {
+				onFocusEnter.emit();
 
-			X11.setInputFocus(display.native, imeWindow, X11.RevertToParent, X11.CurrentTime);
+				X11.XWindowAttributes attributes;
+				if (imeWindow && X11.getWindowAttributes(display.native, imeWindow, &attributes)
+						&& attributes.map_state == X11.IsViewable) {
+					X11.setInputFocus(display.native, imeWindow,
+						X11.RevertToParent, X11.CurrentTime);
+				}
+			}
 
 			break;
 		case X11.FocusOut:
-			onFocusLeave.emit();
+			if (ev.xfocus.detail != X11.NotifyInferior)
+				onFocusLeave.emit();
 			break;
 		case X11.KeyPress:
 			char[16] smallBuffer;
@@ -1033,14 +1070,47 @@ public:
 	}
 
 	override void makeContextCurrent() {
+		enforce!X11Exception(graphicsBackend == GraphicsBackend.OpenGL,
+			"makeContextCurrent is only valid for OpenGL windows");
 		GLX.makeCurrent(display.native, native, glxContext);
 	}
 
 	override void setSwapInterval(bool vsync) {
 		if (disposed) return;
+		enforce!X11Exception(graphicsBackend == GraphicsBackend.OpenGL,
+			"setSwapInterval is only valid for OpenGL windows");
 
 		makeContextCurrent();
 		GLX.swapIntervalEXT(display.native, native, vsync ? 1 : 0);
+	}
+
+	override VK.VkSurfaceKHR createVulkanSurface(
+		VK.VkInstance instance, const(VK.VkAllocationCallbacks)* allocator = null
+	) {
+		import std.conv : to;
+
+		enforce!X11Exception(graphicsBackend == GraphicsBackend.Vulkan,
+			"createVulkanSurface is only valid for Vulkan windows");
+		enforce!X11Exception(!disposed, "cannot create a Vulkan surface for a disposed window");
+		enforce!X11Exception(instance !is null, "cannot create a surface for a null Vulkan instance");
+
+		VK.VulkanInstanceDispatch dispatch = VK.loadVulkanGlobalDispatch().loadInstance(instance);
+		enforce!X11Exception(dispatch.vkCreateXlibSurfaceKHR !is null,
+			"Vulkan instance does not enable VK_KHR_xlib_surface");
+
+		VK.VkXlibSurfaceCreateInfoKHR createInfo;
+		createInfo.dpy = display.native;
+		createInfo.window = native;
+
+		VK.VkSurfaceKHR surface;
+		VK.VkResult result = dispatch.vkCreateXlibSurfaceKHR(
+			instance, &createInfo, allocator, &surface);
+		if (result != VK.VK_SUCCESS) {
+			throw new X11Exception(
+				"vkCreateXlibSurfaceKHR failed with VkResult " ~ (cast(int) result).to!string);
+		}
+
+		return surface;
 	}
 
 	package void updateRegion(IRect region) {
@@ -1054,10 +1124,12 @@ public:
 			return;
 		}
 
-		makeContextCurrent();
+		if (graphicsBackend == GraphicsBackend.OpenGL)
+			makeContextCurrent();
 		m_paintHandler();
 
-		GLX.swapBuffers(display.native, native);
+		if (graphicsBackend == GraphicsBackend.OpenGL)
+			GLX.swapBuffers(display.native, native);
 
 		if (m_postPaintHandler)
 			m_postPaintHandler();

@@ -157,6 +157,9 @@ private:
 	}
 
 public:
+	override string[] vulkanInstanceExtensions() const {
+		return ["VK_KHR_surface", "VK_KHR_xlib_surface"];
+	}
 
 	template atom(string name, Flag!"create" create = Yes.create) {
 		X11.Atom atomResult;
@@ -270,7 +273,7 @@ public:
 		return mods;
 	}
 
-	private bool[X11Window] activeWindows;
+	package(gd.system.x11) bool[X11Window] activeWindows;
 	override bool isActive() {
 		return activeWindows.length > 0;
 	}

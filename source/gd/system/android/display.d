@@ -27,6 +27,9 @@ class AndroidDisplay : Display {
 
 	private bool createdWindow = false;
 	override AndroidWindow createWindow(WindowInitOptions options) {
+		if (options.graphicsBackend != GraphicsBackend.OpenGL) {
+			throw new AndroidException("Vulkan windows are not supported on Android");
+		}
 		if (createdWindow) {
 			throw new AndroidException("cannot create multiple windows on Android");
 		}
@@ -34,6 +37,8 @@ class AndroidDisplay : Display {
 		createdWindow = true;
 		return mainWindow;
 	}
+
+	override string[] vulkanInstanceExtensions() const { return []; }
 
 	override Cursor createCursor(IVec2 size, const(uint)[] data, IVec2 hotspot) => null;
 	override Cursor createXorCursor(IVec2 size, const(uint)[] data, IVec2 hotspot) => null;

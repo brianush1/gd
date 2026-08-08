@@ -227,6 +227,10 @@ class Win32Display : Display {
 		return window;
 	}
 
+	override string[] vulkanInstanceExtensions() const {
+		return ["VK_KHR_surface", "VK_KHR_win32_surface"];
+	}
+
 	override Win32Cursor createCursor(IVec2 size, const(uint)[] data, IVec2 hotspot) {
 		assert(hotspot.x >= 0 && hotspot.y >= 0 && hotspot.x < size.x && hotspot.y < size.y);
 
