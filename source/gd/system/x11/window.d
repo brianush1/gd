@@ -752,14 +752,6 @@ private:
 		case X11.FocusIn:
 			if (ev.xfocus.detail != X11.NotifyInferior)
 				onFocusEnter.emit();
-
-			X11.XWindowAttributes attributes;
-			if (imeWindow && X11.getWindowAttributes(display.native, imeWindow, &attributes)
-					&& attributes.map_state == X11.IsViewable) {
-				X11.setInputFocus(display.native, imeWindow,
-					X11.RevertToParent, X11.CurrentTime);
-			}
-
 			break;
 		case X11.FocusOut:
 			if (ev.xfocus.detail != X11.NotifyInferior)

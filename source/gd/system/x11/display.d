@@ -298,6 +298,8 @@ public:
 	}
 
 	override void processEvents() {
+		bool focusChanged;
+
 		while (X11.pending(native)) {
 			X11.XEvent ev;
 			X11.nextEvent(native, &ev);
@@ -306,10 +308,32 @@ public:
 
 			if (deviceManager.processEvent(ev)) {}
 			else if (X11Window* window = ev.xany.window in windowMap) {
+				if (ev.type == X11.FocusIn || ev.type == X11.FocusOut)
+					focusChanged = true;
+
 				window.processEvent(&ev);
 
 				if (ev.type == X11.DestroyNotify) {
 					windowMap.remove(ev.xany.window);
+				}
+			}
+		}
+
+		// Redirect to the IME child only after focus events have settled. A
+		// NotifyInferior event can be an intermediate step while changing apps.
+		if (focusChanged) {
+			X11.Window focusedWindow;
+			int revertTo;
+			X11.getInputFocus(native, &focusedWindow, &revertTo);
+
+			if (X11Window* window = focusedWindow in windowMap) {
+				X11.XWindowAttributes attributes;
+				if (focusedWindow == window.native
+						&& window.imeWindow
+						&& X11.getWindowAttributes(native, window.imeWindow, &attributes)
+						&& attributes.map_state == X11.IsViewable) {
+					X11.setInputFocus(native, window.imeWindow,
+						X11.RevertToParent, X11.CurrentTime);
 				}
 			}
 		}
