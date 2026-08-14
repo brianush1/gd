@@ -4,6 +4,7 @@ import gd.system.timer;
 import gd.system.socket;
 import gd.system.ssl;
 import gd.resource;
+import gd.signal;
 import gd.threading;
 import core.thread;
 
@@ -30,11 +31,13 @@ abstract class Application : Resource {
 	abstract void deactivate();
 
 	abstract void processEvents(bool wait = true);
+	Signal!() onEventLoopExit;
 
 	void startEventLoop() {
 		while (isActive) {
 			processEvents();
 		}
+		onEventLoopExit.emit();
 	}
 
 }
