@@ -101,6 +101,10 @@ class OSXDisplay : Display {
 		add(Cursors.ZoomOut, NSCursor.crosshairCursor());
 	}
 
+	override string[] vulkanInstanceExtensions() const {
+		return [];
+	}
+
 	override OSXWindow createWindow(WindowInitOptions options) {
 		OSXWindow window = new OSXWindow(this, options);
 		window.onStateChange.connect((WindowState state) {
