@@ -286,6 +286,8 @@ extern (Objective-C) {
 	}
 
 	extern class NSView : NSResponder {
+		override static NSView alloc() @selector("alloc");
+		NSView initWithFrame(NSRect frame) @selector("initWithFrame:");
 		NSRect bounds() const @selector("bounds");
 		NSRect convertRectToBacking(NSRect rect) @selector("convertRectToBacking:");
 		bool acceptsFirstResponder() @selector("acceptsFirstResponder");
@@ -351,6 +353,7 @@ extern (Objective-C) {
 		void clearDrawable() @selector("clearDrawable");
 		void flushBuffer() @selector("flushBuffer");
 		void update() @selector("update");
+		void setView(NSView view) @selector("setView:");
 		void setValues(const(int)* values, NSOpenGLContextParameter parameter)
 			@selector("setValues:forParameter:");
 	}
@@ -411,11 +414,23 @@ extern (Objective-C) {
 
 	extern __gshared NSString NSDeviceRGBColorSpace;
 
+	enum NSCompositingOperation : NSUInteger {
+		Copy = 1,
+	}
+
 	extern class NSImage : NSObject {
 		override static NSImage alloc() @selector("alloc");
 		NSImage initWithSize(NSSize size) @selector("initWithSize:");
 		NSImage initWithCGImage(CGImage image, NSSize size) @selector("initWithCGImage:size:");
 		void addRepresentation(NSImageRep representation) @selector("addRepresentation:");
+		void drawInRect(
+			NSRect destination,
+			NSRect source,
+			NSCompositingOperation operation,
+			CGFloat fraction,
+			bool respectFlipped,
+			NSid hints,
+		) @selector("drawInRect:fromRect:operation:fraction:respectFlipped:hints:");
 	}
 
 	extern class NSCursor : NSObject {
@@ -519,7 +534,7 @@ string toDString(NSString value) {
 	return value.UTF8String.fromStringz.idup;
 }
 
-NSImage createImage(NSSize size, const(uint)[] data) {
+NSImage createImage(NSSize size, const(uint)[] data, bool hasAlpha = true) {
 	import core.stdc.stdlib : free, malloc;
 	import core.stdc.string : memcpy;
 	import std.exception : enforce;
@@ -550,6 +565,7 @@ NSImage createImage(NSSize size, const(uint)[] data) {
 
 	// Image colors are stored as RGBA bytes, matching the engine's GL texture uploads.
 	enum uint alphaLast = 3;
+	enum uint alphaNoneSkipLast = 5;
 	CGImage cgImage = CGImageCreate(
 		cast(size_t) size.width,
 		cast(size_t) size.height,
@@ -557,7 +573,7 @@ NSImage createImage(NSSize size, const(uint)[] data) {
 		32,
 		cast(size_t) size.width * uint.sizeof,
 		colorSpace,
-		alphaLast,
+		hasAlpha ? alphaLast : alphaNoneSkipLast,
 		provider,
 		null,
 		false,

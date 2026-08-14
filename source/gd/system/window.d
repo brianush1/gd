@@ -12,6 +12,7 @@ import std.typecons;
 enum GraphicsBackend : ubyte {
 	OpenGL,
 	Vulkan,
+	PixelFramebuffer,
 }
 
 struct WindowInitOptions {
@@ -117,6 +118,25 @@ enum Clipboard {
 
 abstract class Window : Resource {
 	abstract GraphicsBackend graphicsBackend() const @property;
+
+	private uint[] m_framebuffer;
+
+	/++
+		The window-sized, top-to-bottom RGBA8 pixel buffer (with alpha ignored) used by
+		$(REF PixelFramebuffer, GraphicsBackend). The slice may be replaced when the
+		window size changes and must be reacquired for each paint.
+	+/
+	uint[] framebuffer() {
+		import std.exception : enforce;
+
+		enforce(graphicsBackend == GraphicsBackend.PixelFramebuffer,
+			"framebuffer is only valid for pixel-framebuffer windows");
+		IVec2 framebufferSize = size;
+		size_t length = framebufferSize.x * cast(size_t) framebufferSize.y;
+		if (m_framebuffer.length != length)
+			m_framebuffer.length = length;
+		return m_framebuffer;
+	}
 
 	/++ Fired when the user requests to close the window, for example by clicking the close button +/
 	Signal!() onCloseRequest;

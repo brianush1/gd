@@ -161,6 +161,7 @@ private:
 
 	HDC hdc;
 	HGLRC wglContext;
+	uint[] nativeFramebuffer;
 
 	wchar prevHighSurrogate;
 
@@ -217,8 +218,10 @@ private:
 
 		SetWindowLongPtrW(hwnd, GWLP_USERDATA, cast(LONG_PTR) cast(void*) this);
 
-		if (graphicsBackend == GraphicsBackend.OpenGL) {
+		if (graphicsBackend != GraphicsBackend.Vulkan)
 			hdc = GetDC(hwnd);
+
+		if (graphicsBackend == GraphicsBackend.OpenGL) {
 
 			PIXELFORMATDESCRIPTOR pfd;
 			pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
@@ -422,9 +425,38 @@ public:
 
 		if (graphicsBackend == GraphicsBackend.OpenGL)
 			SwapBuffers(hdc);
+		else if (graphicsBackend == GraphicsBackend.PixelFramebuffer)
+			presentFramebuffer();
 
 		if (m_postPaintHandler)
 			m_postPaintHandler();
+	}
+
+	private void presentFramebuffer() {
+		uint[] pixels = framebuffer;
+		nativeFramebuffer.length = pixels.length;
+		foreach (i, color; pixels) {
+			nativeFramebuffer[i] = color & 0xFF_00_FF_00u
+				| color >> 16 & 0xFF
+				| (color & 0xFF) << 16;
+		}
+
+		BITMAPINFO info;
+		info.bmiHeader.biSize = BITMAPINFOHEADER.sizeof;
+		info.bmiHeader.biWidth = size.x;
+		info.bmiHeader.biHeight = -size.y;
+		info.bmiHeader.biPlanes = 1;
+		info.bmiHeader.biBitCount = 32;
+		info.bmiHeader.biCompression = BI_RGB;
+		StretchDIBits(
+			hdc,
+			0, 0, size.x, size.y,
+			0, 0, size.x, size.y,
+			nativeFramebuffer.ptr,
+			&info,
+			DIB_RGB_COLORS,
+			SRCCOPY,
+		);
 	}
 
 	private string m_title;

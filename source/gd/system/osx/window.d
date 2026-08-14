@@ -7,6 +7,7 @@ import gd.resource;
 import gd.keycode;
 import gd.cursor;
 import gd.math;
+import gd.bindings.vulkan : VkAllocationCallbacks, VkInstance, VkSurfaceKHR;
 import std.algorithm : min, max;
 import std.exception;
 
@@ -124,9 +125,11 @@ class OSXPointer : Pointer {
 class OSXWindow : Window {
 	private OSXDisplay m_display;
 	inout(OSXDisplay) display() inout @property => m_display;
+	private GraphicsBackend m_graphicsBackend;
+	override GraphicsBackend graphicsBackend() const @property => m_graphicsBackend;
 
 	package NSWindow native;
-	package OSXOpenGLView view;
+	package OSXView view;
 	private NSOpenGLContext context;
 	private NSOpenGLPixelFormat pixelFormat;
 	private OSXWindowDelegate windowDelegate;
@@ -144,7 +147,10 @@ class OSXWindow : Window {
 		scope (failure) dispose();
 		addDependency(display);
 		m_display = display;
+		m_graphicsBackend = options.graphicsBackend;
 		isModal = options.modalFor !is null;
+		enforce(graphicsBackend != GraphicsBackend.Vulkan,
+			"Vulkan windows are not supported on macOS");
 
 		NSWindowStyleMask style = NSWindowStyleMask.Titled
 			| NSWindowStyleMask.Closable
@@ -172,42 +178,50 @@ class OSXWindow : Window {
 		windowDelegate.owner = this;
 		native.setDelegate(windowDelegate);
 
-		enforce(options.glVersionMajor < 4
-			|| (options.glVersionMajor == 4 && options.glVersionMinor <= 1),
-			"macOS OpenGL supports core profiles through version 4.1");
-		NSOpenGLPixelFormatAttribute profile = options.glVersionMajor > 3
-			|| (options.glVersionMajor == 3 && options.glVersionMinor > 2)
-			? NSOpenGLPixelFormatAttribute.ProfileVersion4_1Core
-			: NSOpenGLPixelFormatAttribute.ProfileVersion3_2Core;
-		NSOpenGLPixelFormatAttribute[13] attributes = [
-			NSOpenGLPixelFormatAttribute.OpenGLProfile,
-			profile,
-			NSOpenGLPixelFormatAttribute.DoubleBuffer,
-			NSOpenGLPixelFormatAttribute.ColorSize, cast(NSOpenGLPixelFormatAttribute) 24,
-			NSOpenGLPixelFormatAttribute.AlphaSize, cast(NSOpenGLPixelFormatAttribute) 8,
-			NSOpenGLPixelFormatAttribute.DepthSize, cast(NSOpenGLPixelFormatAttribute) options.depthSize,
-			NSOpenGLPixelFormatAttribute.StencilSize, cast(NSOpenGLPixelFormatAttribute) 8,
-			NSOpenGLPixelFormatAttribute.Accelerated,
-			cast(NSOpenGLPixelFormatAttribute) 0,
-		];
-		pixelFormat = NSOpenGLPixelFormat.alloc.initWithAttributes(attributes.ptr);
-		enforce(pixelFormat, "failed to create macOS OpenGL pixel format");
-
-		NSOpenGLContext shareContext;
-		if (options.shareContext) {
-			OSXWindow shareWindow = cast(OSXWindow) options.shareContext;
-			enforce(shareWindow, "expected macOS window as shared OpenGL context");
-			shareContext = shareWindow.context;
-		}
-		context = NSOpenGLContext.alloc.initWithFormat(pixelFormat, shareContext);
-		enforce(context, "failed to create macOS OpenGL context");
-
-		view = OSXOpenGLView.alloc.initWithFrame(contentRect, pixelFormat);
-		enforce(view, "failed to create macOS OpenGL view");
+		view = OSXView.alloc.initWithFrame(contentRect);
+		enforce(view, "failed to create macOS view");
 		view.owner = this;
-		view.setOpenGLContext(context);
 		native.setContentView(view);
 		view.becomeFirstResponder();
+
+		if (graphicsBackend == GraphicsBackend.OpenGL) {
+			enforce(options.glVersionMajor < 4
+				|| (options.glVersionMajor == 4 && options.glVersionMinor <= 1),
+				"macOS OpenGL supports core profiles through version 4.1");
+			NSOpenGLPixelFormatAttribute profile = options.glVersionMajor > 3
+				|| (options.glVersionMajor == 3 && options.glVersionMinor > 2)
+				? NSOpenGLPixelFormatAttribute.ProfileVersion4_1Core
+				: NSOpenGLPixelFormatAttribute.ProfileVersion3_2Core;
+			NSOpenGLPixelFormatAttribute[13] attributes = [
+				NSOpenGLPixelFormatAttribute.OpenGLProfile,
+				profile,
+				NSOpenGLPixelFormatAttribute.DoubleBuffer,
+				NSOpenGLPixelFormatAttribute.ColorSize, cast(NSOpenGLPixelFormatAttribute) 24,
+				NSOpenGLPixelFormatAttribute.AlphaSize, cast(NSOpenGLPixelFormatAttribute) 8,
+				NSOpenGLPixelFormatAttribute.DepthSize, cast(NSOpenGLPixelFormatAttribute) options.depthSize,
+				NSOpenGLPixelFormatAttribute.StencilSize, cast(NSOpenGLPixelFormatAttribute) 8,
+				NSOpenGLPixelFormatAttribute.Accelerated,
+				cast(NSOpenGLPixelFormatAttribute) 0,
+			];
+			pixelFormat = NSOpenGLPixelFormat.alloc.initWithAttributes(attributes.ptr);
+			enforce(pixelFormat, "failed to create macOS OpenGL pixel format");
+
+			NSOpenGLContext shareContext;
+			if (options.shareContext) {
+				OSXWindow shareWindow = cast(OSXWindow) options.shareContext;
+				enforce(shareWindow, "expected macOS window as shared OpenGL context");
+				enforce(shareWindow.graphicsBackend == GraphicsBackend.OpenGL,
+					"shareContext must refer to an OpenGL window");
+				shareContext = shareWindow.context;
+			}
+			context = NSOpenGLContext.alloc.initWithFormat(pixelFormat, shareContext);
+			enforce(context, "failed to create macOS OpenGL context");
+			context.setView(view);
+		}
+		else {
+			enforce(options.shareContext is null,
+				"shareContext is only valid for OpenGL windows");
+		}
 
 		trackingArea = NSTrackingArea.alloc.initWithRect(
 			contentRect,
@@ -231,7 +245,8 @@ class OSXWindow : Window {
 		primaryPointer = new OSXPointer(this);
 		primaryPointer.cursor = Cursors.Arrow;
 		updateSize();
-		makeContextCurrent();
+		if (graphicsBackend == GraphicsBackend.OpenGL)
+			makeContextCurrent();
 
 		assert(!(options.initialState & WindowState.Visible),
 			"window cannot be visible on creation, since a paint handler ought to be set when the window is first shown");
@@ -360,20 +375,39 @@ class OSXWindow : Window {
 	}
 
 	override void setSwapInterval(bool vsync) {
+		enforce(graphicsBackend == GraphicsBackend.OpenGL,
+			"setSwapInterval is only valid for OpenGL windows");
 		int value = vsync ? 1 : 0;
 		context.setValues(&value, NSOpenGLContextParameter.SwapInterval);
 	}
 
 	override void makeContextCurrent() {
+		enforce(graphicsBackend == GraphicsBackend.OpenGL,
+			"makeContextCurrent is only valid for OpenGL windows");
 		context.makeCurrentContext();
+	}
+
+	override VkSurfaceKHR createVulkanSurface(
+		VkInstance instance, const(VkAllocationCallbacks)* allocator = null
+	) {
+		throw new Exception("Vulkan windows are not supported on macOS");
 	}
 
 	package void repaintImmediately() {
 		if (!paintHandler)
 			return;
-		makeContextCurrent();
+		if (graphicsBackend == GraphicsBackend.OpenGL)
+			makeContextCurrent();
 		paintHandler();
-		context.flushBuffer();
+		if (graphicsBackend == GraphicsBackend.OpenGL) {
+			context.flushBuffer();
+		}
+		else {
+			NSImage image = createImage(NSSize(size.x, size.y), framebuffer, false);
+			scope (exit) image.release();
+			image.drawInRect(view.bounds, NSRect.init,
+				NSCompositingOperation.Copy, 1, true, null);
+		}
 		if (postPaintHandler)
 			postPaintHandler();
 	}
@@ -402,7 +436,8 @@ class OSXWindow : Window {
 		);
 		if (value.x < 1) value.x = 1;
 		if (value.y < 1) value.y = 1;
-		context.update();
+		if (context)
+			context.update();
 		if (value != m_size) {
 			m_size = value;
 			onSizeChange.emit(m_size);
@@ -598,10 +633,9 @@ extern (Objective-C) class OSXWindowDelegate : NSObject, NSWindowDelegate {
 	}
 }
 
-extern (Objective-C) class OSXOpenGLView : NSOpenGLView, NSTextInputClient {
-	override static OSXOpenGLView alloc() @selector("alloc");
-	override OSXOpenGLView initWithFrame(NSRect frame, NSOpenGLPixelFormat format)
-		@selector("initWithFrame:pixelFormat:");
+extern (Objective-C) class OSXView : NSView, NSTextInputClient {
+	override static OSXView alloc() @selector("alloc");
+	override OSXView initWithFrame(NSRect frame) @selector("initWithFrame:");
 
 	OSXWindow owner;
 	private string markedText;

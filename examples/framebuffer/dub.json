@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"Brian"
+	],
+	"dependencies": {
+		"gd": {
+			"path": "../.."
+		}
+	},
+	"description": "A minimal pixel framebuffer application.",
+	"license": "proprietary",
+	"name": "framebuffer"
+}

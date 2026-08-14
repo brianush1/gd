@@ -28,7 +28,7 @@ class AndroidDisplay : Display {
 	private bool createdWindow = false;
 	override AndroidWindow createWindow(WindowInitOptions options) {
 		if (options.graphicsBackend != GraphicsBackend.OpenGL) {
-			throw new AndroidException("Vulkan windows are not supported on Android");
+			throw new AndroidException("only OpenGL windows are supported on Android");
 		}
 		if (createdWindow) {
 			throw new AndroidException("cannot create multiple windows on Android");

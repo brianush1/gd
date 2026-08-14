@@ -1121,9 +1121,58 @@ public:
 
 		if (graphicsBackend == GraphicsBackend.OpenGL)
 			GLX.swapBuffers(display.native, native);
+		else if (graphicsBackend == GraphicsBackend.PixelFramebuffer)
+			presentFramebuffer();
 
 		if (m_postPaintHandler)
 			m_postPaintHandler();
+	}
+
+	private void presentFramebuffer() {
+		int screen = X11.defaultScreen(display.native);
+		X11.XImage* image = X11.createImage(
+			display.native,
+			X11.defaultVisual(display.native, screen),
+			X11.defaultDepth(display.native, screen),
+			X11.ZPixmap,
+			0,
+			null,
+			size.x,
+			size.y,
+			32,
+			0,
+		);
+		enforce!X11Exception(image, "could not create pixel framebuffer image");
+		scope (exit) {
+			image.data = null;
+			image.f.destroy_image(image);
+		}
+
+		ubyte[] imageData = new ubyte[image.bytes_per_line * cast(size_t) image.height];
+		image.data = cast(char*) imageData.ptr;
+		uint[] pixels = framebuffer;
+		foreach (y; 0 .. size.y) {
+			foreach (x; 0 .. size.x) {
+				uint color = pixels[y * size.x + x];
+				image.f.put_pixel(image, x, y,
+					scaleChannel(cast(ubyte) color, image.red_mask)
+					| scaleChannel(cast(ubyte)(color >> 8), image.green_mask)
+					| scaleChannel(cast(ubyte)(color >> 16), image.blue_mask));
+			}
+		}
+
+		X11.putImage(display.native, native, X11.defaultGC(display.native, screen), image,
+			0, 0, 0, 0, size.x, size.y);
+	}
+
+	private static ulong scaleChannel(ubyte channel, ulong mask) {
+		if (!mask)
+			return 0;
+		import core.bitop : bsf;
+
+		int shift = bsf(mask);
+		ulong maximum = mask >> shift;
+		return ((channel * maximum + 127) / 255 << shift) & mask;
 	}
 
 	private string m_title;
