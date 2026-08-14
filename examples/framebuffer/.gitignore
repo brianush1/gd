@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/framebuffer
+framebuffer.so
+framebuffer.dylib
+framebuffer.dll
+framebuffer.a
+framebuffer.lib
+framebuffer-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
