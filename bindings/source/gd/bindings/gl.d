@@ -17,7 +17,10 @@ GLLibrary GL() @property { // @suppress(dscanner.confusing.function_attributes)
 GLLibrary loadGL() {
 	string[] libraries;
 
-	version (Posix) {
+	version (OSX) {
+		libraries = ["/System/Library/Frameworks/OpenGL.framework/OpenGL"];
+	}
+	else version (Posix) {
 		libraries = ["libGL.so.1", "libGL.so"];
 	}
 	else version (Windows) {

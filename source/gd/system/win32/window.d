@@ -697,14 +697,14 @@ private LRESULT wndProcD(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 			self.prevHighSurrogate = ch;
 		}
 		else if (0xDC00 <= ch && ch <= 0xDFFF) { // low surrogate
-			self.onTextInput.emit([self.prevHighSurrogate, ch].to!string);
+			self.onTextInput.emit(TextInputEvent([self.prevHighSurrogate, ch].to!string));
 		}
 		else {
 			// don't deliver control characters
 			if (ch < 0x20 || ch == 127)
 				break;
 
-			self.onTextInput.emit(ch.to!string);
+			self.onTextInput.emit(TextInputEvent(ch.to!string));
 		}
 
 		break;
@@ -800,11 +800,11 @@ private LRESULT wndProcD(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 	case WM_MOUSEWHEEL:
 		// TODO: test that this works with smooth scrolling devices
 		double delta = cast(short)(wParam >> 16 & 0xFFFF);
-		self.m_primaryPointer.onScroll.emit(Vec2(0, -delta / 120.0));
+		self.m_primaryPointer.onScroll.emit(ScrollEvent(Vec2(0, -delta / 120.0), false));
 		break;
 	case WM_MOUSEHWHEEL:
 		double delta = cast(short)(wParam >> 16 & 0xFFFF);
-		self.m_primaryPointer.onScroll.emit(Vec2(delta / 120.0, 0));
+		self.m_primaryPointer.onScroll.emit(ScrollEvent(Vec2(delta / 120.0, 0), false));
 		break;
 	case WM_INPUT:
 		import core.stdc.stdlib : alloca;

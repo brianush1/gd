@@ -33,6 +33,11 @@ enum PointerFlags {
 	HasTilt           = 0x0020,
 }
 
+struct ScrollEvent {
+	Vec2 delta;
+	bool isMomentum;
+}
+
 abstract class Pointer : Resource {
 
 	Signal!PointerFlags onFlagsChange;
@@ -53,7 +58,7 @@ abstract class Pointer : Resource {
 
 	/++ raw relative motion event; see also onPositionChange +/
 	Signal!Vec2 onMotion;
-	Signal!Vec2 onScroll;
+	Signal!ScrollEvent onScroll;
 	Signal!() onEnter;
 	Signal!() onLeave;
 	Signal!() onRemove;
@@ -64,6 +69,13 @@ abstract class Pointer : Resource {
 	abstract void lockInPlace();
 	abstract void removeConstraint();
 
+}
+
+struct TextInputEvent {
+	string text;
+	// Unicode code point offsets, or -1 to replace the client's current selection.
+	int replacementStart = -1;
+	int replacementLength;
 }
 
 enum WindowState : uint {
@@ -117,7 +129,7 @@ abstract class Window : Resource {
 	Signal!() onCompositionStart;
 	Signal!(string) onCompositionUpdate;
 	Signal!() onCompositionEnd;
-	Signal!(string) onTextInput;
+	Signal!TextInputEvent onTextInput;
 
 	Signal!IVec2 onSizeChange;
 	Signal!WindowState onStateChange;
@@ -148,6 +160,7 @@ abstract class Window : Resource {
 
 	abstract void setIMEFocus(bool focus);
 	abstract void setIMECursorPosition(IVec2 position);
+	void setIMETextState(string text, int selectionStart, int selectionEnd) {}
 
 	abstract void setSwapInterval(bool vsync);
 

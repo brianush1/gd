@@ -753,7 +753,7 @@ private:
 				if (len == 1 && (buffer[0] < 0x20 || buffer[0] == 127))
 					goto case;
 
-				onTextInput.emit(buffer[0 .. len].idup);
+				onTextInput.emit(TextInputEvent(buffer[0 .. len].idup));
 			}
 
 			goto case;
@@ -936,14 +936,20 @@ private:
 					if (valuator.value != valuator.lastValue) {
 						if (valuator.role == ValuatorRole.ScrollVertical) {
 							pointer.onScroll.emit(
-								Vec2(0, valuator.value - valuator.lastValue)
-								/ valuator.increment
+								ScrollEvent(
+									Vec2(0, valuator.value - valuator.lastValue)
+										/ valuator.increment,
+									false,
+								),
 							);
 						}
 						else if (valuator.role == ValuatorRole.ScrollHorizontal) {
 							pointer.onScroll.emit(
-								Vec2(valuator.value - valuator.lastValue, 0)
-								/ valuator.increment
+								ScrollEvent(
+									Vec2(valuator.value - valuator.lastValue, 0)
+										/ valuator.increment,
+									false,
+								),
 							);
 						}
 						else if (valuator.role == ValuatorRole.Pressure) {

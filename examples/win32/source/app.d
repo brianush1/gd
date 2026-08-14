@@ -52,8 +52,8 @@ void main(string[] args) {
 		writeln("UP   ", info.mods, " ", info.logical, " ", info.physical);
 	});
 
-	win.primaryPointer.onScroll.connect((delta) {
-		writeln("scroll ", delta);
+	win.primaryPointer.onScroll.connect((event) {
+		writeln("scroll ", event.delta, " momentum=", event.isMomentum);
 	});
 
 	win.onStateChange.connect((flags) {

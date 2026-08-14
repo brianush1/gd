@@ -73,6 +73,11 @@ shared static this() {
 
 		m_application = new AndroidApplication();
 	}
+	else version (gd_OSX) {
+		import gd.system.osx.application : OSXApplication;
+
+		m_application = new OSXApplication();
+	}
 	else {
 		static assert(0, "unsupported platform");
 	}

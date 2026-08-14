@@ -33,6 +33,31 @@
 			]
 		},
 		{
+			"name": "gd_OSX",
+			"platforms": [
+				"osx"
+			],
+			"dflags": [
+				"-singleobj"
+			],
+			"lflags": [
+				"-framework",
+				"Cocoa",
+				"-framework",
+				"CoreFoundation",
+				"-framework",
+				"CoreGraphics",
+				"-framework",
+				"OpenGL",
+				"-framework",
+				"Security"
+			],
+			"targetType": "library",
+			"versions": [
+				"gd_OSX"
+			]
+		},
+		{
 			"name": "gd_Android",
 			"libs": [
 				"android",
